@@ -1,0 +1,23 @@
+{
+  "name": "ultimate-pro-shift-manager",
+  "version": "1.0.0",
+  "description": "מערכת מתקדמת לניהול שעות עבודה, שכר וזכויות עובד",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder"
+  },
+  "author": "Or Dadshev",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.ultimate.pro",
+    "productName": "UltimatePro",
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

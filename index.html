@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Pro - Professional Employee Management System</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <div class="login-box">
+                <div class="login-header">
+                    <i class="fas fa-crown"></i>
+                    <h1>Ultimate Pro</h1>
+                    <p class="login-subtitle">Professional Employee Management System</p>
+                </div>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> Employee ID or ID Number</label>
+                        <input type="password" id="id-number" class="form-control" 
+                               placeholder="הכנס קוד זיהוי" maxlength="9" autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                    <div id="login-error" class="error-message"></div>
+                    <div class="login-hint">
+                        <strong>Demo Code:</strong> <code>327806279</code>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION -->
+    <div id="main-screen" class="screen">
+        
+        <!-- HEADER & NAVIGATION -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="btn-menu" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="app-logo">
+                    <i class="fas fa-crown"></i>
+                    <span>Ultimate Pro</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="search-box">
+                    <input type="text" id="global-search" class="form-control" placeholder="Search...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <button class="btn-icon" id="notification-btn" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notification-count" style="display:none;">0</span>
+                </button>
+                <div class="user-menu-container">
+                    <button class="btn-user" onclick="toggleUserMenu()">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%233b82f6'/%3E%3Cpath d='M 30 80 Q 50 60 70 80' fill='%233b82f6'/%3E%3C/svg%3E" alt="User" class="user-avatar">
+                        <span id="user-name">User</span>
+                    </button>
+                    <div class="user-menu" id="user-menu" style="display:none;">
+                        <a href="#" onclick="switchTab('profile', event)" class="menu-item">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                        <a href="#" onclick="switchTab('settings', event)" class="menu-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="#" onclick="handleLogout()" class="menu-item text-danger">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="switchTab('dashboard', event)" data-tab="dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('analytics', event)" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('payroll', event)" data-tab="payroll">
+                    <i class="fas fa-money-bill"></i>
+                    <span>Payroll</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('tax-planning', event)" data-tab="tax">
+                    <i class="fas fa-calculator"></i>
+                    <span>Tax Planning</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('pension', event)" data-tab="pension">
+                    <i class="fas fa-piggy-bank"></i>
+                    <span>Pension</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('insurance', event)" data-tab="insurance">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Insurance</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('compensation', event)" data-tab="compensation">
+                    <i class="fas fa-handshake"></i>
+                    <span>Compensation</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('reports', event)" data-tab="reports">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Reports</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('about', event)" data-tab="about">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </button>
+                <button class="nav-item" onclick="switchTab('support', event)" data-tab="support">
+                    <i class="fas fa-headset"></i>
+                    <span>Support</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <p class="app-version">v2.0.0</p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="app-main">
+            <!-- DASHBOARD TAB -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1>Dashboard</h1>
+                        <p>שלום <strong id="dashboard-user-name">Employee</strong> - רואה כאן את סיכום מפורט של כל הנתונים שלך</p>
+                    </div>
+                    <div class="header-actions">
+                        <input type="month" id="filter-month" class="form-control" onchange="renderDashboard()">
+                        <button class="btn btn-primary" onclick="openShiftModal()">
+                            <i class="fas fa-plus"></i> Add Shift
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI CARDS -->
+                <div class="kpi-grid">
+                    <div class="kpi-card gradient-blue">
+                        <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+                        <div class="kpi-content">
+                            <h4>Total Hours</h4>
+                            <p class="kpi-value" id="kpi-hours">0.00</p>
+                            <span class="kpi-unit">hours</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card gradient-green">
+                        <div class="kpi-icon"><i class="fas fa-shekel-sign"></i></div>
+                        <div class="kpi-content">
+                            <h4>Gross Salary</h4>
+                            <p class="kpi-value" id="kpi-gross">₪0</p>
+                            <span class="kpi-unit">monthly</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card gradient-orange">
+                        <div class="kpi-icon"><i class="fas fa-wallet"></i></div>
+                        <div class="kpi-content">
+                            <h4>Net Salary</h4>
+                            <p class="kpi-value" id="kpi-net">₪0</p>
+                            <span class="kpi-unit">estimated</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card gradient-purple">
+                        <div class="kpi-icon"><i class="fas fa-fire"></i></div>
+                        <div class="kpi-content">
+                            <h4>Overtime Hours</h4>
+                            <p class="kpi-value" id="kpi-overtime">0.00</p>
+                            <span class="kpi-unit">this month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3><i class="fas fa-chart-line"></i> Salary Trend</h3>
+                        <canvas id="salaryChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fas fa-chart-bar"></i> Hours Distribution</h3>
+                        <canvas id="hoursChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SHIFTS TABLE -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> Recent Shifts</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="exportShiftsCSV()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Workplace</th>
+                                    <th>Start - End</th>
+                                    <th>Hours</th>
+                                    <th>Base Pay</th>
+                                    <th>Overtime Pay</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shifts-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ANALYTICS TAB -->
+            <section id="tab-analytics" class="tab-content">
+                <div class="page-header">
+                    <h1>Analytics & Statistics</h1>
+                    <p>Detailed analysis of your work patterns and earning trends</p>
+                </div>
+
+                <div class="tabs-horizontal">
+                    <button class="tab-btn active" onclick="switchAnalyticsTab('overview')">Overview</button>
+                    <button class="tab-btn" onclick="switchAnalyticsTab('trends')">Trends</button>
+                    <button class="tab-btn" onclick="switchAnalyticsTab('comparison')">Comparison</button>
+                </div>
+
+                <!-- OVERVIEW -->
+                <div id="analytics-overview" class="analytics-section active">
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <h4>Average Daily Hours</h4>
+                            <p class="stat-value" id="stat-avg-daily">0.00</p>
+                        </div>
+                        <div class="stat-box">
+                            <h4>Average Hourly Rate</h4>
+                            <p class="stat-value" id="stat-avg-rate">₪0.00</p>
+                        </div>
+                        <div class="stat-box">
+                            <h4>Total Overtime</h4>
+                            <p class="stat-value" id="stat-total-ot">0.00h</p>
+                        </div>
+                        <div class="stat-box">
+                            <h4>Workplace Count</h4>
+                            <p class="stat-value" id="stat-workplace-count">0</p>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Hourly Statistics</h3>
+                            <canvas id="statsChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Workplace Breakdown</h3>
+                            <canvas id="workplaceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRENDS -->
+                <div id="analytics-trends" class="analytics-section" style="display:none;">
+                    <div class="card">
+                        <h3>Salary Trends (Last 12 Months)</h3>
+                        <canvas id="trendsChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <!-- COMPARISON -->
+                <div id="analytics-comparison" class="analytics-section" style="display:none;">
+                    <div class="comparison-container">
+                        <div class="card">
+                            <h3>Month-over-Month Comparison</h3>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Hours</th>
+                                        <th>Salary</th>
+                                        <th>Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparison-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAYROLL TAB -->
+            <section id="tab-payroll" class="tab-content">
+                <div class="page-header">
+                    <h1>Payroll Management</h1>
+                    <p>תבדוק את התלוש שלך מהמעסיק</p>
+                </div>
+
+                <div class="tabs-horizontal">
+                    <button class="tab-btn active" onclick="switchPayrollTab('audit')">Payroll Audit</button>
+                    <button class="tab-btn" onclick="switchPayrollTab('calculator')">Salary Calculator</button>
+                    <button class="tab-btn" onclick="switchPayrollTab('history')">Payment History</button>
+                </div>
+
+                <!-- AUDIT -->
+                <div id="payroll-audit" class="payroll-section active">
+                    <div class="card">
+                        <h3><i class="fas fa-check-double"></i> Verify Your Payslip</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Hours on Payslip</label>
+                                <input type="number" id="audit-hours" class="form-control" step="0.5" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Gross Salary on Payslip</label>
+                                <input type="number" id="audit-gross" class="form-control" step="1" min="0">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="auditPayslip()">
+                            <i class="fas fa-magnifying-glass"></i> Check Discrepancies
+                        </button>
+                        <div id="audit-results" class="results-box" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+
+                <!-- CALCULATOR -->
+                <div id="payroll-calculator" class="payroll-section" style="display:none;">
+                    <div class="card">
+                        <h3><i class="fas fa-calculator"></i> Salary Calculator</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Gross Salary (₪)</label>
+                                <input type="number" id="calc-gross" class="form-control" value="5000" min="0" step="100" oninput="calculateSalaryComponents()">
+                            </div>
+                            <div class="form-group">
+                                <label>Pension Contribution (%)</label>
+                                <input type="number" id="calc-pension" class="form-control" value="6" min="0" max="20" step="0.5" oninput="calculateSalaryComponents()">
+                            </div>
+                        </div>
+                        <div id="calc-breakdown" class="breakdown-box">
+                            <!-- Will be filled by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HISTORY -->
+                <div id="payroll-history" class="payroll-section" style="display:none;">
+                    <div class="card">
+                        <h3><i class="fas fa-history"></i> Payment History</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Gross Salary</th>
+                                    <th>Deductions</th>
+                                    <th>Net Salary</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAX PLANNING TAB -->
+            <section id="tab-tax-planning" class="tab-content">
+                <div class="page-header">
+                    <h1>Tax Planning & Optimization</h1>
+                    <p>מקימום זכויות מס ותכנון פיסקלי</p>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-award"></i> Tax Credits</h3>
+                        <div class="form-group">
+                            <label>Number of Tax Credits</label>
+                            <select id="tax-credits" class="form-control" onchange="calculateTaxBenefit()">
+                                <option value="0">0 Credits</option>
+                                <option value="1">1 Credit</option>
+                                <option value="2">2 Credits</option>
+                                <option value="2.25" selected>2.25 Credits (Default)</option>
+                                <option value="3">3 Credits</option>
+                                <option value="4">4 Credits</option>
+                            </select>
+                        </div>
+                        <div id="tax-credits-result" class="result-box">
+                            <!-- Results will appear here -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3><i class="fas fa-percentage"></i> Tax Brackets 2026</h3>
+                        <div class="tax-brackets-list">
+                            <div class="bracket-item">
+                                <span class="bracket-range">₪0 - ₪6,330</span>
+                                <span class="bracket-rate">10%</span>
+                            </div>
+                            <div class="bracket-item">
+                                <span class="bracket-range">₪6,330 - ₪9,080</span>
+                                <span class="bracket-rate">14%</span>
+                            </div>
+                            <div class="bracket-item">
+                                <span class="bracket-range">₪9,080 - ₪15,240</span>
+                                <span class="bracket-rate">20%</span>
+                            </div>
+                            <div class="bracket-item">
+                                <span class="bracket-range">₪15,240 - ₪27,420</span>
+                                <span class="bracket-rate">31%</span>
+                            </div>
+                            <div class="bracket-item">
+                                <span class="bracket-range">₪27,420 - ₪43,200</span>
+                                <span class="bracket-rate">35%</span>
+                            </div>
+                            <div class="bracket-item">
+                                <span class="bracket-range">₪43,200+</span>
+                                <span class="bracket-rate">49%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3><i class="fas fa-calculator"></i> Tax Calculator</h3>
+                        <div class="form-group">
+                            <label>Annual Gross Income (₪)</label>
+                            <input type="number" id="tax-income" class="form-control" value="60000" min="0" step="1000" oninput="calculateTaxes()">
+                        </div>
+                        <div id="tax-calculation-result" class="result-box">
+                            <!-- Results will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PENSION TAB -->
+            <section id="tab-pension" class="tab-content">
+                <div class="page-header">
+                    <h1>Pension Planning</h1>
+                    <p>תכנון פנסיה וחיסכון לעתיד</p>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-piggy-bank"></i> Pension Projection</h3>
+                        <div class="form-group">
+                            <label>Monthly Gross Salary (₪)</label>
+                            <input type="number" id="pension-salary" class="form-control" value="5000" min="0" step="100" oninput="calculatePensionProjection()">
+                        </div>
+                        <div class="form-group">
+                            <label>Employee Pension Rate (%)</label>
+                            <input type="number" id="pension-employee" class="form-control" value="6" min="0" max="20" step="0.5" oninput="calculatePensionProjection()">
+                        </div>
+                        <div class="form-group">
+                            <label>Years Worked</label>
+                            <input type="number" id="pension-years" class="form-control" value="1" min="0" step="1" oninput="calculatePensionProjection()">
+                        </div>
+                        <div id="pension-result" class="result-box">
+                            <!-- Results will appear here -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3><i class="fas fa-chart-pie"></i> Pension Accumulation Chart</h3>
+                        <canvas id="pensionChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INSURANCE TAB -->
+            <section id="tab-insurance" class="tab-content">
+                <div class="page-header">
+                    <h1>Insurance & Benefits</h1>
+                    <p>ביטוח בריאות, אובדן כושר עבודה וביטוחים נוספים</p>
+                </div>
+
+                <div class="tabs-horizontal">
+                    <button class="tab-btn active" onclick="switchInsuranceTab('health')">Health Insurance</button>
+                    <button class="tab-btn" onclick="switchInsuranceTab('work')">Work Accident</button>
+                    <button class="tab-btn" onclick="switchInsuranceTab('disability')">Disability</button>
+                </div>
+
+                <div id="insurance-health" class="insurance-section active">
+                    <div class="cards-grid">
+                        <div class="card">
+                            <h3>Health Insurance Details</h3>
+                            <ul class="benefits-list">
+                                <li><i class="fas fa-check"></i> Doctor visits covered</li>
+                                <li><i class="fas fa-check"></i> Hospitalization covered</li>
+                                <li><i class="fas fa-check"></i> Prescription medications</li>
+                                <li><i class="fas fa-check"></i> Preventive care</li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <h3>Premium Calculation</h3>
+                            <div class="form-group">
+                                <label>Monthly Salary (₪)</label>
+                                <input type="number" id="health-salary" class="form-control" value="5000" min="0" step="100" oninput="calculateHealthInsurance()">
+                            </div>
+                            <div id="health-result" class="result-box"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="insurance-work" class="insurance-section" style="display:none;">
+                    <div class="card">
+                        <h3>Work Accident Insurance</h3>
+                        <p>Protected against work-related accidents and injuries.</p>
+                        <div class="insurance-info">
+                            <p><strong>Coverage:</strong> Medical treatment, rehabilitation, income loss</p>
+                            <p><strong>Premium:</strong> Employer paid (no employee deduction)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="insurance-disability" class="insurance-section" style="display:none;">
+                    <div class="card">
+                        <h3>Disability Insurance</h3>
+                        <p>Income protection if you become unable to work.</p>
+                        <div class="insurance-info">
+                            <p><strong>Coverage:</strong> Up to 60% of monthly salary</p>
+                            <p><strong>Waiting Period:</strong> 90 days</p>
+                            <p><strong>Maximum Duration:</strong> Until age 65</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMPENSATION TAB -->
+            <section id="tab-compensation" class="tab-content">
+                <div class="page-header">
+                    <h1>Severance & Compensation Calculator</h1>
+                    <p>חישוב פיצויים, דמי פרישה וכל זכויות סיום עבודה</p>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-handshake"></i> Severance Package Calculator</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Monthly Gross Salary (₪)</label>
+                            <input type="number" id="comp-salary" class="form-control" value="5000" min="0" step="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Years of Service</label>
+                            <input type="number" id="comp-years" class="form-control" value="1" min="0" max="50" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Working Days Per Month</label>
+                            <input type="number" id="comp-workdays" class="form-control" value="22" min="1" max="31" step="1">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="calculateCompensation()">
+                        <i class="fas fa-calculator"></i> Calculate
+                    </button>
+                    <div id="comp-results" class="results-box" style="margin-top: 20px;"></div>
+                </div>
+            </section>
+
+            <!-- REPORTS TAB -->
+            <section id="tab-reports" class="tab-content">
+                <div class="page-header">
+                    <h1>Reports & Exports</h1>
+                    <p>Generate detailed reports and export your data</p>
+                </div>
+
+                <div class="reports-grid">
+                    <div class="report-card" onclick="generateMonthlyReport()">
+                        <i class="fas fa-file-pdf"></i>
+                        <h4>Monthly Report</h4>
+                        <p>Summary of hours, salary, and taxes</p>
+                    </div>
+                    <div class="report-card" onclick="generateYearlyReport()">
+                        <i class="fas fa-file-excel"></i>
+                        <h4>Yearly Summary</h4>
+                        <p>Annual statistics and trends</p>
+                    </div>
+                    <div class="report-card" onclick="exportDataJSON()">
+                        <i class="fas fa-download"></i>
+                        <h4>Export Data</h4>
+                        <p>Download all your data as JSON</p>
+                    </div>
+                    <div class="report-card" onclick="exportDataCSV()">
+                        <i class="fas fa-table"></i>
+                        <h4>Export CSV</h4>
+                        <p>Import to Excel or other tools</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 30px;">
+                    <h3><i class="fas fa-file-invoice-dollar"></i> Tax Report</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Report Year</label>
+                            <input type="number" id="tax-report-year" class="form-control" value="2026" min="2020" max="2030">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateTaxReport()">
+                        <i class="fas fa-file-pdf"></i> Generate Tax Report
+                    </button>
+                    <div id="tax-report-result" style="margin-top: 20px;"></div>
+                </div>
+            </section>
+
+            <!-- ABOUT TAB (ENGLISH) -->
+            <section id="tab-about" class="tab-content">
+                <div class="about-page">
+                    <div class="about-header">
+                        <h1>About Ultimate Pro</h1>
+                    </div>
+
+                    <div class="about-container">
+                        <div class="about-section">
+                            <h2>About the Application</h2>
+                            <p>
+                                Ultimate Pro is a professional employee management system designed to help individual 
+                                workers, freelancers, and employees track their working hours, manage salary calculations, 
+                                and understand their financial and legal rights.
+                            </p>
+                            <p>
+                                Our mission is to empower employees with the tools and knowledge they need to manage their 
+                                careers effectively, ensure fair compensation, and make informed financial decisions.
+                            </p>
+                        </div>
+
+                        <div class="about-section">
+                            <h2>Key Features</h2>
+                            <div class="features-list">
+                                <div class="feature-item">
+                                    <i class="fas fa-clock"></i>
+                                    <div>
+                                        <h4>Shift Tracking</h4>
+                                        <p>Record your work hours with detailed timestamps and break tracking</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-calculator"></i>
+                                    <div>
+                                        <h4>Salary Calculations</h4>
+                                        <p>Automatic calculation of gross, net, taxes, and deductions</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    <div>
+                                        <h4>Analytics</h4>
+                                        <p>Visualize your earning trends and work patterns</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-piggy-bank"></i>
+                                    <div>
+                                        <h4>Pension Planning</h4>
+                                        <p>Project your retirement savings and pension income</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <div>
+                                        <h4>Benefits & Insurance</h4>
+                                        <p>Understand your insurance coverage and benefits</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <div>
+                                        <h4>Reports</h4>
+                                        <p>Generate detailed reports for taxes and verification</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="about-section">
+                            <h2>Developer</h2>
+                            <div class="developer-card">
+                                <h3>Or Dadshev</h3>
+                                <p class="role">Software Developer & Creator</p>
+                                <p>
+                                    Ultimate Pro was developed by Or Dadshev as a solution to help workers better understand 
+                                    and manage their employment rights and financial situations. This application combines 
+                                    technical expertise with a deep understanding of Israeli labor law and employee rights.
+                                </p>
+                                <div class="developer-info">
+                                    <p><strong>Skills:</strong> Full-Stack Development, Financial Calculations, UI/UX Design</p>
+                                    <p><strong>Focus:</strong> Employee Empowerment & Financial Literacy</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="about-section">
+                            <h2>Legal Disclaimer</h2>
+                            <div class="disclaimer-box">
+                                <p>
+                                    <strong>⚠️ IMPORTANT NOTICE:</strong>
+                                </p>
+                                <p>
+                                    Ultimate Pro is a financial and employment management tool designed for informational 
+                                    and calculation purposes only. It does NOT serve as a replacement for:
+                                </p>
+                                <ul>
+                                    <li>Professional legal advice from a licensed attorney</li>
+                                    <li>Tax consultation from a certified accountant or tax advisor</li>
+                                    <li>Professional financial planning advice</li>
+                                    <li>Official government employment services</li>
+                                </ul>
+                                <p>
+                                    While we strive for accuracy, calculations and information provided by this application 
+                                    may contain errors or be subject to change due to tax law updates, regulatory changes, or 
+                                    other factors. Always verify information with official sources and professionals before 
+                                    making important decisions.
+                                </p>
+                                <p>
+                                    The developer (Or Dadshev) and all associated parties are not responsible for any decisions 
+                                    made based on this application's calculations or information. Users assume full responsibility 
+                                    for verifying all information with appropriate authorities and professionals.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="about-section">
+                            <h2>Rights & Responsibilities</h2>
+                            <p>
+                                As an employee in Israel, you have significant legal protections under Israeli labor law. 
+                                This application helps you understand your rights, but professional consultation is essential 
+                                for specific situations.
+                            </p>
+                            <p>
+                                Key areas covered by Israeli law include working hours, minimum wage, overtime, vacation days, 
+                                severance pay, pension contributions, and protection from discrimination and harassment.
+                            </p>
+                        </div>
+
+                        <div class="about-section">
+                            <h2>Contact & Support</h2>
+                            <p>
+                                For issues, suggestions, or questions about Ultimate Pro, please use the Support section 
+                                of this application or contact through available support channels.
+                            </p>
+                        </div>
+
+                        <div class="about-footer">
+                            <p>Ultimate Pro v2.0.0</p>
+                            <p>© 2026 Or Dadshev. All rights reserved.</p>
+                            <p class="version-info">Last Updated: August 30, 2026</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUPPORT TAB -->
+            <section id="tab-support" class="tab-content">
+                <div class="page-header">
+                    <h1>Help & Support</h1>
+                    <p>Get assistance and learn how to use Ultimate Pro effectively</p>
+                </div>
+
+                <div class="support-container">
+                    <div class="faq-section">
+                        <h2><i class="fas fa-question-circle"></i> Frequently Asked Questions</h2>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">
+                                <span>How do I add a new shift?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Click the "Add Shift" button on the Dashboard, fill in your work details including start time, end time, and any breaks, then save.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">
+                                <span>How accurate are the salary calculations?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Calculations are based on 2026 Israeli tax brackets and regulations, but may differ from actual payslips due to individual circumstances. Always verify with your employer.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Can I export my data?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Yes! Visit the Reports section to export your data as JSON or CSV format.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <button class="faq-question" onclick="toggleFAQ(this)">
+                                <span>Is my data private and secure?</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="faq-answer">
+                                <p>All data is stored locally in your browser. No information is sent to external servers. We cannot access your data.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-section">
+                        <h2><i class="fas fa-envelope"></i> Get Help</h2>
+                        <div class="contact-info">
+                            <p>For technical issues or feature requests, please provide as much detail as possible about your problem.</p>
+                            <button class="btn btn-primary" onclick="openContactForm()">
+                                <i class="fas fa-paper-plane"></i> Send Message
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="resources-section">
+                        <h2><i class="fas fa-book"></i> Useful Resources</h2>
+                        <ul class="resources-list">
+                            <li><a href="https://www.gov.il/he/departments/ministry_of_labor" target="_blank">
+                                Ministry of Labor (Israel) <i class="fas fa-external-link-alt"></i>
+                            </a></li>
+                            <li><a href="https://www.histadrut.org.il/" target="_blank">
+                                Histadrut (Union) <i class="fas fa-external-link-alt"></i>
+                            </a></li>
+                            <li><a href="https://www.tax.gov.il/" target="_blank">
+                                Israel Tax Authority <i class="fas fa-external-link-alt"></i>
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SETTINGS TAB -->
+            <section id="tab-settings" class="tab-content">
+                <div class="page-header">
+                    <h1>Settings</h1>
+                    <p>Customize your application preferences</p>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="settings-section">
+                        <h3><i class="fas fa-palette"></i> Appearance</h3>
+                        <div class="setting-item">
+                            <label>Theme</label>
+                            <div class="theme-options">
+                                <button class="theme-btn" onclick="setTheme('light')">
+                                    <i class="fas fa-sun"></i> Light
+                                </button>
+                                <button class="theme-btn" onclick="setTheme('dark')">
+                                    <i class="fas fa-moon"></i> Dark
+                                </button>
+                                <button class="theme-btn" onclick="setTheme('auto')">
+                                    <i class="fas fa-circle-half-stroke"></i> Auto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3><i class="fas fa-briefcase"></i> Workplace Management</h3>
+                        <button class="btn btn-primary" onclick="openWorkplaceModal()">
+                            <i class="fas fa-plus"></i> Add Workplace
+                        </button>
+                        <div id="workplaces-list" style="margin-top: 15px;"></div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3><i class="fas fa-cog"></i> General Settings</h3>
+                        <div class="setting-item">
+                            <label>Default Travel Allowance (₪)</label>
+                            <input type="number" id="setting-travel" class="form-control" value="25" min="0" step="1">
+                        </div>
+                        <div class="setting-item">
+                            <label>Pension Contribution Rate (%)</label>
+                            <input type="number" id="setting-pension" class="form-control" value="6" min="0" max="20" step="0.5">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3><i class="fas fa-database"></i> Data Management</h3>
+                        <button class="btn btn-secondary" onclick="exportAllData()">
+                            <i class="fas fa-download"></i> Export All Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="importData()">
+                            <i class="fas fa-upload"></i> Import Data
+                        </button>
+                        <button class="btn btn-danger" onclick="resetAll()">
+                            <i class="fas fa-trash"></i> Delete All Data
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROFILE TAB -->
+            <section id="tab-profile" class="tab-content">
+                <div class="page-header">
+                    <h1>My Profile</h1>
+                    <p>Manage your personal information</p>
+                </div>
+
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%233b82f6'/%3E%3Cpath d='M 30 80 Q 50 60 70 80' fill='%233b82f6'/%3E%3C/svg%3E" alt="Profile" class="profile-avatar-large">
+                        <div class="profile-info">
+                            <h2 id="profile-name">Employee</h2>
+                            <p id="profile-id">ID: -</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Profile Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="profile-fullname" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="profile-email" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="profile-phone" class="form-control">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveProfile()">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="shift-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shift-modal-title">Add Shift</h2>
+                <button class="close-btn" onclick="closeShiftModal()">×</button>
+            </div>
+            <form id="shift-form" onsubmit="saveShift(event)">
+                <input type="hidden" id="shift-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="shift-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Workplace</label>
+                        <select id="shift-workplace" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="shift-start" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="shift-end" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Break (minutes)</label>
+                        <input type="number" id="shift-break" class="form-control" value="0" min="0" step="15">
+                    </div>
+                    <div class="form-group">
+                        <label>Day Type</label>
+                        <select id="shift-daytype" class="form-control">
+                            <option value="regular">Regular</option>
+                            <option value="friday">Friday/Holiday Eve</option>
+                            <option value="saturday">Saturday/Holiday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tips (₪)</label>
+                        <input type="number" id="shift-tips" class="form-control" value="0" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Travel Allowance (₪)</label>
+                        <input type="number" id="shift-travel" class="form-control" value="0" min="0" step="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="shift-notes" class="form-control" rows="3" placeholder="Optional notes"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeShiftModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Shift</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="workplace-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="workplace-modal-title">Add Workplace</h2>
+                <button class="close-btn" onclick="closeWorkplaceModal()">×</button>
+            </div>
+            <form id="workplace-form" onsubmit="saveWorkplace(event)">
+                <input type="hidden" id="workplace-id">
+                <div class="form-group">
+                    <label>Workplace Name</label>
+                    <input type="text" id="workplace-name" class="form-control" placeholder="e.g., Supermarket" required>
+                </div>
+                <div class="form-group">
+                    <label>Hourly Rate (₪)</label>
+                    <input type="number" id="workplace-rate" class="form-control" min="1" step="0.5" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeWorkplaceModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Workplace</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="utils.js"></script>
+    <script src="modules.js"></script>
+    <script src="utilities-extended.js"></script>
+    <script src="advanced-features.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

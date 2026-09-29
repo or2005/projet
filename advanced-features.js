@@ -33,7 +33,7 @@ const ShiftAnalyzer = {
                 shift.startTime, shift.endTime, shift.breakMinutes, wp.wage, shift.dayType
             );
 
-            const efficiency = (wp.wage * calc.hours) / (calc.hours * 60);
+            const efficiency = calc.hours > 0 ? calc.total / calc.hours : 0;
             efficiencies.push(efficiency);
 
             if (!timeSlots[hour]) {

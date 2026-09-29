@@ -11,9 +11,31 @@
 
 const ShiftCalculations = {
     /**
-     * Calculate shift details with all deductions
+     * Gross earnings for a single shift (no tax — tax is monthly).
      */
     fullShiftCalculation(shift, workplace) {
+        if (shift.payType === 'daily') {
+            const dailyWage = Math.max(0, Number(shift.dailyWage) || 0);
+            const tips = shift.tips || 0;
+            const travel = shift.travel || 0;
+            const extras = tips + travel;
+            return {
+                hours: 0,
+                regularHours: 0,
+                overtimeHours: 0,
+                overtime125Hours: 0,
+                overtime150Hours: 0,
+                baseEarn: dailyWage,
+                overtimeEarn: 0,
+                total: dailyWage,
+                tips,
+                travel,
+                extras,
+                grossWithExtras: dailyWage + extras,
+                deductions: null,
+                net: null
+            };
+        }
         const calc = AppUtils.OvertimeCalculator.calculateFullShift(
             shift.startTime, shift.endTime, shift.breakMinutes, workplace.wage, shift.dayType
         );
@@ -21,9 +43,7 @@ const ShiftCalculations = {
         const tips = shift.tips || 0;
         const travel = shift.travel || 0;
         const extras = tips + travel;
-
         const grossWithExtras = calc.total + extras;
-        const deductions = AppUtils.TaxCalculator.calculateDeductions(grossWithExtras);
 
         return {
             ...calc,
@@ -31,21 +51,18 @@ const ShiftCalculations = {
             travel,
             extras,
             grossWithExtras,
-            deductions: {
-                incomeTax: deductions.incomeTax,
-                nationalInsurance: deductions.nationalInsurance,
-                healthInsurance: deductions.healthInsurance,
-                pension: deductions.employeePension,
-                total: deductions.total
-            },
-            net: grossWithExtras - deductions.total
+            deductions: null,
+            net: null
         };
     },
 
     /**
-     * Calculate month summary
+     * Month summary: sum gross from shifts, then apply monthly deductions once.
      */
-    calculateMonthSummary(shifts, workplaces) {
+    calculateMonthSummary(shifts, workplaces, options = {}) {
+        const pensionRate = options.pensionRate != null ? options.pensionRate : 6;
+        const creditPoints = options.creditPoints != null ? options.creditPoints : 2.25;
+
         if (shifts.length === 0) {
             return {
                 totalShifts: 0,
@@ -55,12 +72,15 @@ const ShiftCalculations = {
                 totalNet: 0,
                 regularHours: 0,
                 overtimeHours: 0,
+                overtime125Hours: 0,
+                overtime150Hours: 0,
                 averageHourlyRate: 0,
-                daysWorked: new Set(shifts.map(s => s.date)).size
+                daysWorked: 0,
+                deductionsBreakdown: null
             };
         }
 
-        let summary = {
+        const summary = {
             totalShifts: shifts.length,
             totalHours: 0,
             totalGross: 0,
@@ -68,22 +88,24 @@ const ShiftCalculations = {
             totalNet: 0,
             regularHours: 0,
             overtimeHours: 0,
+            overtime125Hours: 0,
+            overtime150Hours: 0,
             totalExtras: 0,
             daysWorked: new Set(),
-            workplaceBreakdown: {}
+            workplaceBreakdown: {},
+            deductionsBreakdown: null
         };
 
         shifts.forEach(shift => {
             const wp = workplaces.find(w => w.id === shift.workplaceId) || { name: 'Unknown', wage: 0 };
             const calc = this.fullShiftCalculation(shift, wp);
 
-            summary.totalShifts++;
             summary.totalHours += calc.hours;
             summary.totalGross += calc.grossWithExtras;
-            summary.totalDeductions += calc.deductions.total;
-            summary.totalNet += calc.net;
             summary.regularHours += calc.regularHours;
             summary.overtimeHours += calc.overtimeHours;
+            summary.overtime125Hours += calc.overtime125Hours || 0;
+            summary.overtime150Hours += calc.overtime150Hours || 0;
             summary.totalExtras += calc.extras;
             summary.daysWorked.add(shift.date);
 
@@ -101,6 +123,12 @@ const ShiftCalculations = {
             summary.workplaceBreakdown[wp.id].gross += calc.grossWithExtras;
         });
 
+        const deductions = AppUtils.TaxCalculator.calculateDeductions(
+            summary.totalGross, pensionRate, creditPoints
+        );
+        summary.deductionsBreakdown = deductions;
+        summary.totalDeductions = deductions.total;
+        summary.totalNet = summary.totalGross - deductions.total;
         summary.daysWorked = summary.daysWorked.size;
         summary.averageHourlyRate = summary.totalHours > 0 ? summary.totalGross / summary.totalHours : 0;
 
@@ -118,17 +146,23 @@ const ReportingEngine = {
      */
     generateMonthlyReport(month, appState) {
         const shifts = appState.shifts.filter(s => s.date.startsWith(month));
-        const summary = ShiftCalculations.calculateMonthSummary(shifts, appState.workplaces);
+        const pensionRate = (appState.settings && appState.settings.pension) || 6;
+        const creditPoints = (appState.settings && appState.settings.creditPoints) || 2.25;
+        const summary = ShiftCalculations.calculateMonthSummary(shifts, appState.workplaces, {
+            pensionRate,
+            creditPoints
+        });
 
         return {
             reportType: 'MONTHLY',
             month: month,
             generatedAt: new Date().toISOString(),
+            disclaimer: 'אומדן בלבד — לא מחליף תלוש שכר רשמי',
             summary: summary,
             details: {
                 shifts: shifts,
                 workplaces: appState.workplaces,
-                taxInfo: AppUtils.TaxCalculator.calculateDeductions(summary.totalGross)
+                taxInfo: summary.deductionsBreakdown
             },
             export: {
                 csv: this.generateCSV(shifts, summary),
@@ -230,16 +264,38 @@ const ReportingEngine = {
      * Generate tax report for year
      */
     generateTaxReport(year, appState) {
-        const yearShifts = appState.shifts.filter(s => s.date.startsWith(year));
-        const totalGross = yearShifts.reduce((sum, s) => {
-            const wp = appState.workplaces.find(w => w.id === s.workplaceId) || { wage: 0 };
-            const calc = AppUtils.OvertimeCalculator.calculateFullShift(
-                s.startTime, s.endTime, s.breakMinutes, wp.wage, s.dayType
-            );
-            return sum + calc.total;
-        }, 0);
+        const yearShifts = appState.shifts.filter(s => s.date.startsWith(String(year)));
+        const pensionRate = (appState.settings && appState.settings.pension) || 6;
+        const creditPoints = (appState.settings && appState.settings.creditPoints) || 2.25;
 
-        const deductions = AppUtils.TaxCalculator.calculateDeductions(totalGross);
+        // Sum monthly nets correctly (brackets apply per month, not on annual lump)
+        const months = {};
+        yearShifts.forEach(s => {
+            const key = s.date.substring(0, 7);
+            if (!months[key]) months[key] = [];
+            months[key].push(s);
+        });
+
+        let totalGross = 0;
+        let totalTax = 0;
+        let totalNI = 0;
+        let totalHealth = 0;
+        let totalPension = 0;
+        let totalNet = 0;
+
+        Object.keys(months).forEach(monthKey => {
+            const summary = ShiftCalculations.calculateMonthSummary(
+                months[monthKey], appState.workplaces, { pensionRate, creditPoints }
+            );
+            totalGross += summary.totalGross;
+            totalNet += summary.totalNet;
+            if (summary.deductionsBreakdown) {
+                totalTax += summary.deductionsBreakdown.incomeTax;
+                totalNI += summary.deductionsBreakdown.nationalInsurance;
+                totalHealth += summary.deductionsBreakdown.healthInsurance;
+                totalPension += summary.deductionsBreakdown.employeePension;
+            }
+        });
 
         return {
             reportType: 'TAX',
@@ -247,15 +303,16 @@ const ReportingEngine = {
             employmentIncome: totalGross,
             grossIncome: totalGross,
             deductions: {
-                incomeTax: deductions.incomeTax,
-                nationalInsurance: deductions.nationalInsurance,
-                healthInsurance: deductions.healthInsurance,
-                pensionContribution: deductions.employeePension,
-                totalDeductions: deductions.total
+                incomeTax: totalTax,
+                nationalInsurance: totalNI,
+                healthInsurance: totalHealth,
+                pensionContribution: totalPension,
+                totalDeductions: totalTax + totalNI + totalHealth + totalPension
             },
-            netIncome: totalGross - deductions.total,
-            effectiveTaxRate: (deductions.incomeTax / totalGross * 100).toFixed(2) + '%',
-            generatedAt: new Date().toISOString()
+            netIncome: totalNet,
+            effectiveTaxRate: totalGross > 0 ? ((totalTax / totalGross) * 100).toFixed(2) + '%' : '0%',
+            generatedAt: new Date().toISOString(),
+            disclaimer: 'אומדן שנתי לפי חישוב חודשי — לא דוח למס הכנסה'
         };
     }
 };

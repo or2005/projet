@@ -5,7 +5,11 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder"
+    "build": "electron-builder --win nsis --x64 --publish never",
+    "dist": "npm run build",
+    "pack": "npm run build",
+    "test:performance": "node tests/performance.test.js",
+    "test": "node tests/pay-calculators.test.js && node tests/hub-foundation.test.js && node tests/profile-store.test.js && node tests/weather-service.test.js && node tests/dashboard-feed.test.js && node tests/finance-model.test.js && node tests/finance-store.test.js && node tests/calendar-app.test.js && node tests/analyst-engine.test.js && node tests/google-calendar-service.test.js && node tests/drive-sync.test.js && node tests/account-storage.test.js && node tests/account-store-isolation.test.js && node tests/version-consistency.test.js"
   },
   "author": "Or Dadshev",
   "license": "MIT",
@@ -15,9 +19,30 @@
   },
   "build": {
     "appId": "com.ultimate.pro",
-    "productName": "UltimatePro",
+    "productName": "Ultimate Pro",
+    "artifactName": "${productName} Setup ${version}.${ext}",
+    "directories": {
+      "output": "dist/installers"
+    },
     "win": {
-      "target": "nsis"
-    }
+      "target": ["nsis"],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ultimate Pro",
+      "uninstallDisplayName": "Ultimate Pro",
+      "deleteAppDataOnUninstall": false
+    },
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!my-desktop-app/**"
+    ]
   }
 }

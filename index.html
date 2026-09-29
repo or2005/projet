@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Pro - Professional Employee Management System</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self';">
+    <title>Ultimate Pro: המרכז האישי</title>
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Chart Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Local fonts / icons / charts (offline) -->
+    <link rel="stylesheet" href="vendor/fontawesome.min.css">
+    <script src="vendor/chart.min.js"></script>
+    <script src="vendor/html2pdf.bundle.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-mode">
+<body class="light-mode">
 
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="screen active">
@@ -24,23 +22,358 @@
                 <div class="login-header">
                     <i class="fas fa-crown"></i>
                     <h1>Ultimate Pro</h1>
-                    <p class="login-subtitle">Professional Employee Management System</p>
+                    <p class="login-subtitle">המרכז האישי שלך</p>
+                    <p class="login-subtitle login-version">גרסה 1.0.0</p>
                 </div>
-                <form onsubmit="handleLogin(event)">
-                    <div class="form-group">
-                        <label><i class="fas fa-id-card"></i> Employee ID or ID Number</label>
-                        <input type="password" id="id-number" class="form-control" 
-                               placeholder="הכנס קוד זיהוי" maxlength="9" autocomplete="off" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-sign-in-alt"></i> Login
+                <form id="login-form" onsubmit="handleGoogleLogin(event)">
+                    <p class="login-subtitle">התחברות עם חשבון Google פותחת את היומן ואת הגיבוי הפרטי שלך.</p>
+                    <button type="submit" id="google-login-button" class="btn btn-primary btn-block">
+                        <i class="fab fa-google"></i> התחברות עם Google
                     </button>
                     <div id="login-error" class="error-message"></div>
-                    <div class="login-hint">
-                        <strong>Demo Code:</strong> <code>327806279</code>
-                    </div>
+                    <p class="login-hint">משתמש חדש? אחרי אישור Google נשלים יחד את הפרופיל.</p>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <section id="profile-setup-screen" class="screen profile-setup-screen" aria-labelledby="profile-setup-title">
+        <div class="profile-setup-panel">
+            <div class="hub-brand-mark"><i class="fas fa-user-astronaut"></i></div>
+            <p class="hub-eyebrow">הגדרה ראשונית</p>
+            <h1 id="profile-setup-title">נעים להכיר</h1>
+            <p class="hub-copy">הפרופיל נשמר במחשב הזה ומקושר לחשבון Google שאיתו התחברת. רק שם ותאריך לידה נדרשים.</p>
+            <form id="profile-setup-form" onsubmit="saveHubProfile(event)">
+                <div class="hub-form-grid">
+                    <div class="form-group">
+                        <label for="setup-name">שם להצגה</label>
+                        <input id="setup-name" class="form-control" type="text" maxlength="80" autocomplete="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-birth-date">תאריך לידה</label>
+                        <input id="setup-birth-date" class="form-control" type="date" autocomplete="bday" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-id-number">תעודת זהות <span class="optional-label">רשות</span></label>
+                        <input id="setup-id-number" class="form-control" type="password" inputmode="numeric" maxlength="9" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-email">דוא״ל <span class="optional-label">רשות</span></label>
+                        <input id="setup-email" class="form-control" type="email" maxlength="120" autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="setup-phone">טלפון <span class="optional-label">רשות</span></label>
+                        <input id="setup-phone" class="form-control" type="tel" maxlength="24" autocomplete="tel">
+                    </div>
+                    <div class="profile-age-preview">
+                        <span>הגיל שלך</span>
+                        <strong id="setup-age">יחושב מתאריך הלידה</strong>
+                    </div>
+                </div>
+                <p id="profile-setup-error" class="error-message" role="alert"></p>
+                <button class="btn btn-primary btn-block" type="submit"><i class="fas fa-arrow-left"></i> המשך למרכז התוכנות</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="hub-screen" class="screen hub-screen" aria-label="מרכז התוכנות האישי">
+        <header class="hub-header">
+            <a class="hub-brand" href="#" onclick="returnToHub(event)" aria-label="Ultimate Pro, מרכז התוכנות">
+                <span class="hub-brand-mark"><i class="fas fa-layer-group"></i></span>
+                <span><strong>Ultimate Pro</strong><small>המרכז האישי</small></span>
+            </a>
+            <div class="hub-live-clock" aria-live="off">
+                <span class="hub-clock-icon"><i class="far fa-clock"></i></span>
+                <span><strong id="hub-clock">--:--:--</strong><small id="hub-date">טוען תאריך</small></span>
+            </div>
+            <div class="hub-header-actions">
+                <button class="btn btn-secondary hub-icon-action" type="button" onclick="openHubSettings()" title="הגדרות אישיות ומזג אוויר" aria-label="הגדרות"><i class="fas fa-sliders"></i></button>
+                <button class="btn btn-secondary hub-logout" type="button" onclick="handleLogout()"><i class="fas fa-arrow-right-from-bracket"></i><span>יציאה</span></button>
+            </div>
+        </header>
+
+        <main class="hub-main">
+            <section class="hub-welcome">
+                <div>
+                    <p class="hub-eyebrow">המרחב שלך</p>
+                    <h1 id="hub-greeting">בוקר טוב אור ☀️</h1>
+                    <p class="hub-copy"><span id="hub-user-name">משתמש</span> · מה תרצה לנהל היום?</p>
+                </div>
+                <div class="hub-summary-inline" aria-label="סיכום החודש">
+                    <div><small>שעות החודש</small><strong id="hub-summary-hours">0 שעות</strong></div>
+                    <div><small>שכר צפוי</small><strong id="hub-summary-salary">₪0</strong></div>
+                    <div><small>תקציב נותר</small><strong id="hub-summary-budget">₪0</strong></div>
+                </div>
+            </section>
+
+            <section class="analyst-banner" aria-labelledby="hub-analyst-title">
+                <div class="analyst-banner-mark" aria-hidden="true"><i class="fas fa-brain"></i></div>
+                <div class="analyst-banner-copy">
+                    <p class="hub-eyebrow">תמונה חכמה, מקומית ופרטית</p>
+                    <h2 id="hub-analyst-title">האנליסט האישי</h2>
+                    <p id="hub-analyst-insight" aria-live="polite">אוסף נתונים כדי לזהות את התובנה הבאה שלך.</p>
+                </div>
+                <div class="analyst-banner-actions">
+                    <button class="btn btn-secondary" type="button" onclick="cycleSmartAnalystInsight()" title="תובנה הבאה" aria-label="תובנה הבאה"><i class="fas fa-arrow-left"></i></button>
+                    <button class="btn btn-primary" type="button" onclick="openSmartAnalystDrawer()"><i class="fas fa-chart-line"></i><span>פתח דוח אנליסט מפורט</span></button>
+                </div>
+            </section>
+
+            <section class="drive-backup-card" aria-labelledby="drive-backup-title">
+                <div class="drive-backup-heading">
+                    <span class="drive-backup-icon" aria-hidden="true"><i class="fab fa-google-drive"></i></span>
+                    <div>
+                        <p class="hub-eyebrow">עותק פרטי בתיקיית האפליקציה</p>
+                        <h2 id="drive-backup-title">גיבוי וסנכרון ענן (Google Drive)</h2>
+                        <p id="drive-backup-status" class="drive-backup-status" role="status" aria-live="polite">בודק את מצב הגיבוי...</p>
+                    </div>
+                </div>
+                <div class="drive-backup-actions">
+                    <button id="drive-backup-upload" class="btn btn-primary" data-action="upload" type="button"><i class="fab fa-google-drive"></i><span>גבה עכשיו לענן</span></button>
+                    <button id="drive-backup-restore" class="btn btn-secondary" data-action="restore" type="button"><i class="fas fa-cloud-arrow-down"></i><span>שחזר נתונים</span></button>
+                </div>
+                <p id="drive-backup-toast" class="drive-backup-toast" role="status" aria-live="polite" hidden></p>
+            </section>
+
+            <section class="hub-overview-grid" aria-label="מבט מהיר">
+                <article class="hub-widget-panel hub-weather-panel" aria-labelledby="hub-weather-title">
+                    <div class="hub-widget-heading">
+                        <div><p class="hub-eyebrow">עכשיו בחוץ</p><h2 id="hub-weather-title">מזג האוויר</h2></div>
+                        <button class="hub-refresh-button" type="button" onclick="refreshHubWeather()" title="רענון מזג האוויר" aria-label="רענון מזג האוויר"><i class="fas fa-rotate"></i></button>
+                    </div>
+                    <div id="hub-weather-content" class="hub-weather-content" aria-live="polite">
+                        <span class="hub-weather-icon"><i class="fas fa-sun"></i></span>
+                        <div><strong id="hub-weather-temperature">--°</strong><span id="hub-weather-description">מזג אוויר בהיר</span></div>
+                        <small id="hub-weather-city">עפולה</small>
+                    </div>
+                </article>
+                <article class="hub-widget-panel hub-advice-card" aria-labelledby="hub-advice-title">
+                    <div class="hub-widget-heading">
+                        <div><p class="hub-eyebrow">מחשבה קטנה ליום</p><h2 id="hub-advice-title">טיפ להיום</h2></div>
+                        <button class="hub-refresh-button advice-refresh-button" id="hub-advice-refresh" type="button" onclick="refreshDailyAdvice()" title="טיפ אחר" aria-label="הצגת טיפ אחר"><i class="fas fa-rotate"></i></button>
+                    </div>
+                    <div class="hub-feed-content"><i class="fas fa-lightbulb hub-feed-icon advice-icon" aria-hidden="true"></i><p id="hub-advice-text" aria-live="polite">צעד קטן ועקבי יכול לעשות שינוי גדול.</p></div>
+                </article>
+                <article class="hub-widget-panel hub-fact-card" aria-labelledby="hub-fact-title">
+                    <div class="hub-widget-heading">
+                        <div><p class="hub-eyebrow">משהו חדש</p><h2 id="hub-fact-title">הידעת?</h2></div>
+                    </div>
+                    <div class="hub-feed-content"><i class="fas fa-wand-magic-sparkles hub-feed-icon fact-icon" aria-hidden="true"></i><p id="hub-fact-text" aria-live="polite">היום הוא זמן טוב לגלות משהו חדש.</p></div>
+                </article>
+            </section>
+
+            <section class="hub-apps-section" aria-labelledby="hub-apps-title">
+                <div class="hub-section-heading">
+                    <div><p class="hub-eyebrow">שלושת הכלים שלך</p><h2 id="hub-apps-title">המרכז האישי</h2></div>
+                    <span id="hub-app-count" class="hub-app-count"></span>
+                </div>
+                <div id="hub-app-grid" class="hub-app-grid"></div>
+            </section>
+            <p id="hub-message" class="hub-message" role="status" aria-live="polite"></p>
+            <footer class="hub-footer"><span>המידע האישי נשמר במכשיר שלך.</span><span>Ultimate Pro <span id="hub-version">1.0.0</span></span></footer>
+        </main>
+    </section>
+
+    <div id="analyst-drawer-backdrop" class="analyst-drawer-backdrop" hidden onclick="closeSmartAnalystDrawer(event)">
+        <aside id="analyst-drawer" class="analyst-drawer" role="dialog" aria-modal="true" aria-labelledby="analyst-drawer-title" tabindex="-1">
+            <header class="analyst-drawer-header"><div><p class="hub-eyebrow">ניתוח אישי</p><h2 id="analyst-drawer-title">דוח האנליסט</h2></div><button class="icon-button" type="button" onclick="closeSmartAnalystDrawer()" aria-label="סגירת הדוח"><i class="fas fa-xmark"></i></button></header>
+            <div id="analyst-drawer-content" class="analyst-drawer-content"><p class="muted-copy">טוען ניתוח...</p></div>
+            <form id="analyst-what-if-form" class="analyst-what-if" onsubmit="simulateSmartAnalyst(event)">
+                <h3>מה יקרה אם?</h3>
+                <label>הוצאה נוספת (₪)<input id="analyst-sim-expense" class="form-control" type="number" min="0" step="50" value="0"></label>
+                <label>משמרות לביטול<input id="analyst-sim-shifts" class="form-control" type="number" min="0" step="1" value="0"></label>
+                <button class="btn btn-primary" type="submit"><i class="fas fa-flask"></i> הצג השפעה</button>
+                <p id="analyst-simulation-result" class="muted-copy" aria-live="polite"></p>
+            </form>
+        </aside>
+    </div>
+
+    <div id="drive-sync-indicator" class="drive-sync-indicator" role="status" aria-live="polite" hidden></div>
+
+    <section id="calendar-screen" class="screen calendar-screen" aria-label="יומן אישי">
+        <header class="finance-header">
+            <button class="finance-back-button" type="button" onclick="returnToHub(event)"><i class="fas fa-arrow-right"></i><span>מרכז התוכנות</span></button>
+            <div class="finance-heading"><p class="hub-eyebrow">לוח שנה אישי</p><h1>יומן</h1></div>
+            <div class="finance-header-actions">
+                <button class="btn btn-secondary" id="calendar-google-connect" type="button" onclick="PersonalApps.calendar.signInGoogle()"><i class="fab fa-google"></i><span>התחבר עם Google</span></button>
+                <button class="btn btn-secondary" id="calendar-google-disconnect" type="button" onclick="PersonalApps.calendar.signOutGoogle()" hidden><i class="fas fa-link-slash"></i><span>התנתק</span></button>
+                <button class="btn btn-primary" type="button" onclick="PersonalApps.calendar.openEventComposer()"><i class="fas fa-plus"></i><span>אירוע חדש</span></button>
+            </div>
+        </header>
+        <p id="calendar-google-status" class="calendar-google-status" role="status" aria-live="polite"></p>
+        <main class="calendar-main">
+            <div class="calendar-layout">
+                <div id="calendar-root" class="calendar-root"></div>
+                <section id="calendar-agenda" class="calendar-agenda" aria-live="polite"></section>
+            </div>
+        </main>
+    </section>
+
+    <section id="finance-screen" class="screen finance-screen" aria-label="תוכנת הכנסות והוצאות">
+        <header class="finance-header">
+            <button class="finance-back-button" type="button" onclick="PersonalApps.financeApp.close()"><i class="fas fa-arrow-right"></i><span>מרכז התוכנות</span></button>
+            <div class="finance-heading"><p class="hub-eyebrow">ניהול כספי חודשי</p><h1>הכנסות והוצאות</h1></div>
+            <div class="finance-header-actions">
+                <button class="btn btn-primary" id="finance-add-button" type="button"><i class="fas fa-plus"></i><span>תנועה חדשה</span></button>
+                <details class="finance-tools">
+                    <summary class="btn btn-secondary"><i class="fas fa-ellipsis"></i><span>כלים</span></summary>
+                    <div class="finance-tools-menu">
+                        <button class="btn btn-secondary" type="button" data-finance-action="export"><i class="fas fa-file-export"></i><span>ייצוא CSV</span></button>
+                        <button class="btn btn-secondary" type="button" data-finance-action="backup"><i class="fas fa-box-archive"></i><span>גיבוי JSON</span></button>
+                        <button class="btn btn-secondary" type="button" data-finance-action="import"><i class="fas fa-file-import"></i><span>שחזור גיבוי</span></button>
+                        <input id="finance-backup-file" type="file" accept="application/json,.json" hidden>
+                    </div>
+                </details>
+            </div>
+        </header>
+        <main class="finance-main">
+            <div class="finance-period-row">
+                <div><p class="hub-eyebrow">החודש שלך</p><h2 id="finance-month-label"></h2></div>
+                <label class="finance-month-control"><span>בחירת חודש</span><input id="finance-month" class="form-control" type="month"></label>
+            </div>
+
+            <section class="finance-summary-grid" aria-label="סיכום חודשי">
+                <article class="finance-summary-card income"><span class="finance-summary-icon"><i class="fas fa-arrow-down"></i></span><div><span>הכנסות</span><strong id="finance-income-total">₪0</strong><small id="finance-income-change"></small></div></article>
+                <article class="finance-summary-card expense"><span class="finance-summary-icon"><i class="fas fa-arrow-up"></i></span><div><span>הוצאות נטו</span><strong id="finance-expense-total">₪0</strong><small id="finance-expense-change"></small><small id="finance-refunds-total"></small></div></article>
+                <article class="finance-summary-card remaining"><span class="finance-summary-icon"><i class="fas fa-scale-balanced"></i></span><div><span>נשאר החודש</span><strong id="finance-remaining-total">₪0</strong><small>הכנסות פחות הוצאות נטו</small></div></article>
+            </section>
+
+            <section class="finance-savings-panel" aria-labelledby="finance-savings-title">
+                <div class="finance-savings-heading">
+                    <div><p class="app-eyebrow">חיסכון חודשי</p><h2 id="finance-savings-title">יעד חיסכון</h2></div>
+                    <label class="finance-savings-rate"><span>מההכנסה</span><input id="finance-savings-percent" class="form-control" type="number" min="0" max="100" step="1" value="10"><span>%</span></label>
+                </div>
+                <div class="finance-savings-progress" role="progressbar" aria-label="התקדמות ליעד חיסכון" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="finance-savings-progress-fill"></span></div>
+                <div class="finance-savings-caption"><span id="finance-savings-status">הזן הכנסה כדי לחשב יעד</span><strong id="finance-savings-remaining">₪0 ליעד</strong></div>
+            </section>
+
+            <details class="finance-secondary-details">
+                <summary>ניהול תקציב, קטגוריות וחשבונות</summary>
+                <section class="finance-main-grid">
+                <article class="finance-panel finance-budget-panel">
+                    <div class="finance-panel-heading"><div><p class="hub-eyebrow">גבולות והתקדמות</p><h2>התקציב החודשי</h2></div><button class="btn btn-secondary btn-sm" type="button" data-finance-action="budget">עריכת תקציב</button></div>
+                    <div id="finance-total-budget" class="finance-total-budget"></div>
+                    <div id="finance-category-budgets" class="finance-category-budgets"></div>
+                    <form id="finance-category-form" class="finance-category-form">
+                        <select id="finance-category-kind" class="form-control" aria-label="סוג קטגוריה"><option value="expense">קטגוריית הוצאה</option><option value="income">קטגוריית הכנסה</option></select>
+                        <input id="finance-category-name" class="form-control" type="text" maxlength="40" placeholder="שם קטגוריה חדשה" required>
+                        <button class="btn btn-secondary btn-sm" type="submit">הוספה</button>
+                    </form>
+                </article>
+                <article class="finance-panel">
+                    <div class="finance-panel-heading"><div><p class="hub-eyebrow">לאן הכסף יוצא</p><h2>הוצאות לפי קטגוריה</h2></div></div>
+                    <div id="finance-category-list" class="finance-category-list"></div>
+                </article>
+                </section>
+
+                <section class="finance-accounts-section">
+                    <div class="finance-panel-heading"><div><p class="hub-eyebrow">יתרות לפי מקור</p><h2>החשבונות שלי</h2></div><button class="btn btn-secondary btn-sm" type="button" data-finance-action="account"><i class="fas fa-plus"></i> הוספת חשבון</button></div>
+                    <div id="finance-accounts-list" class="finance-accounts-list"></div>
+                </section>
+            </details>
+
+            <section class="finance-transactions-section">
+                <section class="analyst-inline finance-analyst-widget" aria-labelledby="finance-analyst-title">
+                    <div class="analyst-inline-heading"><span class="analyst-inline-mark"><i class="fas fa-droplet"></i></span><div><p class="hub-eyebrow">זיהוי דליפות</p><h2 id="finance-analyst-title">תחזית והוצאות חריגות</h2></div></div>
+                    <div id="finance-analyst-insights" class="analyst-inline-content"><p>טוען תובנות לפי התנועות שלך.</p></div>
+                </section>
+                <div class="finance-panel-heading"><div><p class="hub-eyebrow">רישום חודשי</p><h2>תנועות</h2></div><button class="btn btn-secondary btn-sm" type="button" data-finance-action="recurring"><i class="fas fa-repeat"></i> תנועות קבועות</button></div>
+                <div class="finance-filter-row">
+                    <input id="finance-search" class="form-control" type="search" placeholder="חיפוש לפי תיאור או קטגוריה">
+                    <select id="finance-type-filter" class="form-control" aria-label="סינון לפי סוג"><option value="">כל הסוגים</option><option value="income">הכנסה</option><option value="expense">הוצאה</option><option value="refund">החזר</option><option value="transfer">העברה</option></select>
+                    <select id="finance-category-filter" class="form-control" aria-label="סינון לפי קטגוריה"><option value="">כל הקטגוריות</option></select>
+                    <select id="finance-account-filter" class="form-control" aria-label="סינון לפי חשבון"><option value="">כל החשבונות</option></select>
+                </div>
+                <div class="finance-table-wrap">
+                    <table class="finance-table">
+                        <thead><tr><th>תאריך</th><th>תיאור</th><th>קטגוריה</th><th>חשבון</th><th>סכום</th><th>פעולות</th></tr></thead>
+                        <tbody id="finance-transactions-body"></tbody>
+                    </table>
+                </div>
+                <p id="finance-message" class="finance-message" role="status" aria-live="polite"></p>
+                <p id="finance-save-status" class="finance-save-status"></p>
+            </section>
+            <section id="finance-recurring-list" class="finance-recurring-list" aria-label="כללים לתנועות חוזרות"></section>
+        </main>
+
+        <div id="finance-transaction-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="finance-transaction-title" style="display:none;">
+            <div class="modal-content finance-dialog">
+                <div class="modal-header"><h2 id="finance-transaction-title">תנועה חדשה</h2><button class="close-btn" type="button" data-finance-action="close-transaction" aria-label="סגירה">×</button></div>
+                <form id="finance-transaction-form">
+                    <input id="finance-transaction-id" type="hidden">
+                    <div class="finance-form-grid">
+                        <div class="form-group"><label for="finance-transaction-type">סוג תנועה</label><select id="finance-transaction-type" class="form-control"><option value="expense">הוצאה</option><option value="income">הכנסה</option><option value="refund">החזר</option><option value="transfer">העברה בין חשבונות</option></select></div>
+                        <div class="form-group"><label for="finance-transaction-amount">סכום בשקלים</label><input id="finance-transaction-amount" class="form-control" type="number" min="0.01" step="0.01" required></div>
+                        <div class="form-group"><label for="finance-transaction-date">תאריך</label><input id="finance-transaction-date" class="form-control" type="date" required></div>
+                        <div class="form-group" id="finance-category-group"><label for="finance-category-select">קטגוריה</label><select id="finance-category-select" class="form-control"></select></div>
+                        <div class="form-group"><label id="finance-account-label" for="finance-account-select">מהחשבון</label><select id="finance-account-select" class="form-control" required></select></div>
+                        <div class="form-group" id="finance-transfer-account-group" hidden><label for="finance-transfer-account-select">אל החשבון</label><select id="finance-transfer-account-select" class="form-control"></select></div>
+                        <div class="form-group" id="finance-installment-group"><label for="finance-installment-count">חלוקה לתשלומים</label><select id="finance-installment-count" class="form-control"><option value="1">תשלום אחד</option><option value="2">2 תשלומים</option><option value="3">3 תשלומים</option><option value="4">4 תשלומים</option><option value="6">6 תשלומים</option><option value="12">12 תשלומים</option></select></div>
+                        <div class="form-group"><label for="finance-transaction-description">תיאור</label><input id="finance-transaction-description" class="form-control" type="text" maxlength="100" placeholder="למשל קניות בסופר"></div>
+                    </div>
+                    <p id="finance-form-error" class="error-message" role="alert"></p>
+                    <div class="modal-actions"><button class="btn btn-secondary" type="button" data-finance-action="close-transaction">ביטול</button><button class="btn btn-primary" type="submit">שמירת תנועה</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div id="finance-account-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="finance-account-title" style="display:none;">
+            <div class="modal-content finance-dialog"><div class="modal-header"><h2 id="finance-account-title">הוספת חשבון</h2><button class="close-btn" type="button" data-finance-action="close-account" aria-label="סגירה">×</button></div>
+                <form id="finance-account-form"><div class="form-group"><label for="finance-account-name">שם החשבון</label><input id="finance-account-name" class="form-control" maxlength="50" placeholder="למשל חשבון הבנק שלי" required></div><div class="form-group"><label for="finance-account-type">סוג</label><select id="finance-account-type" class="form-control"><option value="checking">חשבון בנק</option><option value="cash">מזומן</option><option value="credit">כרטיס אשראי</option><option value="savings">חיסכון</option></select></div><div class="form-group"><label for="finance-account-opening">יתרת פתיחה</label><input id="finance-account-opening" class="form-control" type="number" step="0.01" value="0"></div><p id="finance-account-error" class="error-message" role="alert"></p><div class="modal-actions"><button class="btn btn-secondary" type="button" data-finance-action="close-account">ביטול</button><button class="btn btn-primary" type="submit">שמירת חשבון</button></div></form>
+            </div>
+        </div>
+
+        <div id="finance-budget-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="finance-budget-title" style="display:none;">
+            <div class="modal-content finance-dialog"><div class="modal-header"><h2 id="finance-budget-title">הגדרת תקציב</h2><button class="close-btn" type="button" data-finance-action="close-budget" aria-label="סגירה">×</button></div>
+                <form id="finance-budget-form"><div class="form-group"><label for="finance-budget-total">תקציב חודשי כולל</label><input id="finance-budget-total" class="form-control" type="number" min="0" step="1"></div><details class="finance-budget-details"><summary>תקציב לפי קטגוריה</summary><div id="finance-budget-fields" class="finance-budget-fields"></div></details><div class="modal-actions"><button class="btn btn-secondary" type="button" data-finance-action="close-budget">ביטול</button><button class="btn btn-primary" type="submit">שמירת תקציב</button></div></form>
+            </div>
+        </div>
+
+        <div id="finance-recurring-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="finance-recurring-title" style="display:none;">
+            <div class="modal-content finance-dialog"><div class="modal-header"><h2 id="finance-recurring-title">הוספת תנועה קבועה</h2><button class="close-btn" type="button" data-finance-action="close-recurring" aria-label="סגירה">×</button></div>
+                <form id="finance-recurring-form"><div class="finance-form-grid"><div class="form-group"><label for="finance-recurring-type">סוג</label><select id="finance-recurring-type" class="form-control"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select></div><div class="form-group"><label for="finance-recurring-amount">סכום</label><input id="finance-recurring-amount" class="form-control" type="number" min="0.01" step="0.01" required></div><div class="form-group"><label for="finance-recurring-category">קטגוריה</label><select id="finance-recurring-category" class="form-control"></select></div><div class="form-group"><label for="finance-recurring-account">חשבון</label><select id="finance-recurring-account" class="form-control"></select></div><div class="form-group"><label for="finance-recurring-day">יום בחודש</label><input id="finance-recurring-day" class="form-control" type="number" min="1" max="31" value="1" required></div><div class="form-group"><label for="finance-recurring-interval">חזרה כל כמה חודשים</label><select id="finance-recurring-interval" class="form-control"><option value="1">כל חודש</option><option value="2">כל חודשיים</option><option value="3">כל רבעון</option><option value="12">כל שנה</option></select></div><div class="form-group"><label for="finance-recurring-start">חודש התחלה</label><input id="finance-recurring-start" class="form-control" type="month" required></div><div class="form-group"><label for="finance-recurring-description">תיאור</label><input id="finance-recurring-description" class="form-control" maxlength="100"></div></div><p id="finance-recurring-error" class="error-message" role="alert"></p><div class="modal-actions"><button class="btn btn-secondary" type="button" data-finance-action="close-recurring">ביטול</button><button class="btn btn-primary" type="submit">שמירת תנועה קבועה</button></div></form>
+            </div>
+        </div>
+    </section>
+
+    <div id="hub-settings-modal" class="modal hub-settings-modal" role="dialog" aria-modal="true" aria-labelledby="hub-settings-title" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div><p class="hub-eyebrow">העדפות פרטיות</p><h2 id="hub-settings-title">הגדרות המרכז</h2></div>
+                <button class="close-btn" type="button" onclick="closeHubSettings()" aria-label="סגירת הגדרות">×</button>
+            </div>
+            <form id="hub-settings-form" onsubmit="saveHubSettings(event)">
+                <details class="hub-profile-settings">
+                    <summary>הפרופיל האישי</summary>
+                    <div class="hub-form-grid">
+                        <div class="form-group">
+                            <label for="hub-settings-name">שם להצגה</label>
+                            <input id="hub-settings-name" class="form-control" type="text" maxlength="80" autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="hub-settings-birth-date">תאריך לידה</label>
+                            <input id="hub-settings-birth-date" class="form-control" type="date" autocomplete="bday">
+                        </div>
+                        <div class="form-group">
+                            <label for="hub-settings-id-number">תעודת זהות</label>
+                            <input id="hub-settings-id-number" class="form-control" type="password" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="ריק כדי להשאיר כפי שהוא">
+                        </div>
+                        <div class="form-group">
+                            <label for="hub-settings-email">דוא״ל</label>
+                            <input id="hub-settings-email" class="form-control" type="email" maxlength="120" autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="hub-settings-phone">טלפון</label>
+                            <input id="hub-settings-phone" class="form-control" type="tel" maxlength="24" autocomplete="tel">
+                        </div>
+                    </div>
+                </details>
+                <p id="hub-settings-error" class="error-message" role="alert"></p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" onclick="closeHubSettings()">ביטול</button>
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> שמירת הגדרות</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -57,15 +390,16 @@
                     <i class="fas fa-crown"></i>
                     <span>Ultimate Pro</span>
                 </div>
+                <button class="btn btn-secondary hub-return-button" type="button" onclick="returnToHub()" title="חזרה למרכז התוכנות"><i class="fas fa-grid-2"></i><span>המרכז האישי</span></button>
             </div>
             <div class="header-center">
                 <div class="search-box">
-                    <input type="text" id="global-search" class="form-control" placeholder="Search...">
+                    <input type="text" id="global-search" class="form-control" placeholder="חיפוש משמרות / מקומות עבודה...">
                     <i class="fas fa-search"></i>
                 </div>
             </div>
             <div class="header-right">
-                <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">
+                <button class="btn-icon" onclick="toggleTheme()" title="החלפת ערכת נושא">
                     <i class="fas fa-moon" id="theme-icon"></i>
                 </button>
                 <button class="btn-icon" id="notification-btn" onclick="showNotifications()">
@@ -74,19 +408,16 @@
                 </button>
                 <div class="user-menu-container">
                     <button class="btn-user" onclick="toggleUserMenu()">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%233b82f6'/%3E%3Cpath d='M 30 80 Q 50 60 70 80' fill='%233b82f6'/%3E%3C/svg%3E" alt="User" class="user-avatar">
-                        <span id="user-name">User</span>
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%233b82f6'/%3E%3Cpath d='M 30 80 Q 50 60 70 80' fill='%233b82f6'/%3E%3C/svg%3E" alt="משתמש" class="user-avatar">
+                        <span id="user-name">משתמש</span>
                     </button>
                     <div class="user-menu" id="user-menu" style="display:none;">
                         <a href="#" onclick="switchTab('profile', event)" class="menu-item">
-                            <i class="fas fa-user"></i> Profile
-                        </a>
-                        <a href="#" onclick="switchTab('settings', event)" class="menu-item">
-                            <i class="fas fa-cog"></i> Settings
+                            <i class="fas fa-user"></i> פרופיל
                         </a>
                         <hr>
                         <a href="#" onclick="handleLogout()" class="menu-item text-danger">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                            <i class="fas fa-sign-out-alt"></i> התנתקות
                         </a>
                     </div>
                 </div>
@@ -96,49 +427,40 @@
         <!-- SIDEBAR NAVIGATION -->
         <aside class="sidebar" id="sidebar">
             <nav class="sidebar-nav">
+                <div class="nav-group">ראשי</div>
                 <button class="nav-item active" onclick="switchTab('dashboard', event)" data-tab="dashboard">
                     <i class="fas fa-chart-pie"></i>
-                    <span>Dashboard</span>
+                    <span>לוח בקרה</span>
                 </button>
-                <button class="nav-item" onclick="switchTab('analytics', event)" data-tab="analytics">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Analytics</span>
+                <button class="nav-item" onclick="switchTab('smart-analyst', event)" data-tab="smart-analyst">
+                    <i class="fas fa-brain"></i>
+                    <span>אנליסט חכם</span>
                 </button>
+
+                <div class="nav-group">שכר וזכויות</div>
                 <button class="nav-item" onclick="switchTab('payroll', event)" data-tab="payroll">
                     <i class="fas fa-money-bill"></i>
-                    <span>Payroll</span>
+                    <span>בדיקת תלוש</span>
                 </button>
-                <button class="nav-item" onclick="switchTab('tax-planning', event)" data-tab="tax">
-                    <i class="fas fa-calculator"></i>
-                    <span>Tax Planning</span>
+                <button class="nav-item" onclick="switchTab('monthly-estimate', event)" data-tab="monthly-estimate">
+                    <i class="fas fa-calendar-days"></i>
+                    <span>אומדן חודשי</span>
                 </button>
-                <button class="nav-item" onclick="switchTab('pension', event)" data-tab="pension">
-                    <i class="fas fa-piggy-bank"></i>
-                    <span>Pension</span>
-                </button>
-                <button class="nav-item" onclick="switchTab('insurance', event)" data-tab="insurance">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Insurance</span>
-                </button>
-                <button class="nav-item" onclick="switchTab('compensation', event)" data-tab="compensation">
-                    <i class="fas fa-handshake"></i>
-                    <span>Compensation</span>
-                </button>
+
+                <div class="nav-group">כלים</div>
                 <button class="nav-item" onclick="switchTab('reports', event)" data-tab="reports">
                     <i class="fas fa-file-pdf"></i>
-                    <span>Reports</span>
+                    <span>דוחות</span>
                 </button>
-                <button class="nav-item" onclick="switchTab('about', event)" data-tab="about">
-                    <i class="fas fa-info-circle"></i>
-                    <span>About</span>
+                <button class="nav-item" onclick="switchTab('settings', event)" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>הגדרות שכר</span>
                 </button>
-                <button class="nav-item" onclick="switchTab('support', event)" data-tab="support">
-                    <i class="fas fa-headset"></i>
-                    <span>Support</span>
-                </button>
+
+                <div class="nav-group">מידע</div>
             </nav>
             <div class="sidebar-footer">
-                <p class="app-version">v2.0.0</p>
+                <p class="app-version">v1.0.0</p>
             </div>
         </aside>
 
@@ -148,13 +470,18 @@
             <section id="tab-dashboard" class="tab-content active">
                 <div class="page-header">
                     <div class="header-content">
-                        <h1>Dashboard</h1>
-                        <p>שלום <strong id="dashboard-user-name">Employee</strong> - רואה כאן את סיכום מפורט של כל הנתונים שלך</p>
+                        <h1>לוח בקרה</h1>
+                        <p><strong id="dashboard-user-name">משתמש</strong>, סיכום השעות והשכר שלך</p>
                     </div>
                     <div class="header-actions">
                         <input type="month" id="filter-month" class="form-control" onchange="renderDashboard()">
+                        <div class="employment-mode-toggle" role="group" aria-label="סוג פעילות">
+                            <button type="button" class="is-active" data-employment-mode="employee" aria-pressed="true">שכיר / משמרות</button>
+                            <button type="button" data-employment-mode="freelance" aria-pressed="false">פרילנסר / עוסק פטור</button>
+                        </div>
+                        <button class="btn btn-secondary" id="salary-sync-button" type="button" onclick="syncCurrentSalaryToFinance()"><i class="fas fa-arrow-right-arrow-left"></i><span>סנכרן שכר לכספים</span></button>
                         <button class="btn btn-primary" onclick="openShiftModal()">
-                            <i class="fas fa-plus"></i> Add Shift
+                            <i class="fas fa-plus"></i> הוסף משמרת
                         </button>
                     </div>
                 </div>
@@ -164,69 +491,56 @@
                     <div class="kpi-card gradient-blue">
                         <div class="kpi-icon"><i class="fas fa-clock"></i></div>
                         <div class="kpi-content">
-                            <h4>Total Hours</h4>
+                            <h4>סה״כ שעות</h4>
                             <p class="kpi-value" id="kpi-hours">0.00</p>
-                            <span class="kpi-unit">hours</span>
+                            <span class="kpi-unit">שעות</span>
                         </div>
                     </div>
                     <div class="kpi-card gradient-green">
                         <div class="kpi-icon"><i class="fas fa-shekel-sign"></i></div>
                         <div class="kpi-content">
-                            <h4>Gross Salary</h4>
+                            <h4>שכר ברוטו</h4>
                             <p class="kpi-value" id="kpi-gross">₪0</p>
-                            <span class="kpi-unit">monthly</span>
+                            <span class="kpi-unit">חודשי</span>
                         </div>
                     </div>
                     <div class="kpi-card gradient-orange">
                         <div class="kpi-icon"><i class="fas fa-wallet"></i></div>
                         <div class="kpi-content">
-                            <h4>Net Salary</h4>
+                            <h4>שכר נטו</h4>
                             <p class="kpi-value" id="kpi-net">₪0</p>
-                            <span class="kpi-unit">estimated</span>
+                            <span class="kpi-unit">הערכה</span>
                         </div>
                     </div>
                     <div class="kpi-card gradient-purple">
                         <div class="kpi-icon"><i class="fas fa-fire"></i></div>
                         <div class="kpi-content">
-                            <h4>Overtime Hours</h4>
+                            <h4>שעות נוספות</h4>
                             <p class="kpi-value" id="kpi-overtime">0.00</p>
-                            <span class="kpi-unit">this month</span>
+                            <span class="kpi-unit">החודש</span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- CHARTS -->
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <h3><i class="fas fa-chart-line"></i> Salary Trend</h3>
-                        <canvas id="salaryChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h3><i class="fas fa-chart-bar"></i> Hours Distribution</h3>
-                        <canvas id="hoursChart"></canvas>
                     </div>
                 </div>
 
                 <!-- SHIFTS TABLE -->
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fas fa-list"></i> Recent Shifts</h3>
-                        <button class="btn btn-sm btn-secondary" onclick="exportShiftsCSV()">
-                            <i class="fas fa-download"></i> Export
-                        </button>
+                        <h3><i class="fas fa-list"></i> משמרות אחרונות</h3>
+                        <div class="table-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="exportShiftsCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+                            <button class="btn btn-sm btn-secondary" onclick="exportShiftsPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                        </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="data-table">
+                        <table class="data-table dashboard-shifts-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Workplace</th>
-                                    <th>Start - End</th>
-                                    <th>Hours</th>
-                                    <th>Base Pay</th>
-                                    <th>Overtime Pay</th>
-                                    <th>Total</th>
-                                    <th>Actions</th>
+                                    <th>תאריך</th>
+                                    <th>מקום עבודה</th>
+                                    <th>התחלה - סיום</th>
+                                    <th>שעות</th>
+                                    <th>סה״כ</th>
+                                    <th>פעולות</th>
                                 </tr>
                             </thead>
                             <tbody id="shifts-tbody">
@@ -235,48 +549,47 @@
                     </div>
                 </div>
             </section>
-
             <!-- ANALYTICS TAB -->
             <section id="tab-analytics" class="tab-content">
                 <div class="page-header">
-                    <h1>Analytics & Statistics</h1>
-                    <p>Detailed analysis of your work patterns and earning trends</p>
+                    <h1>ניתוח</h1>
+                    <p>מגמות שעות, שכר והשוואות חודשיות</p>
                 </div>
 
                 <div class="tabs-horizontal">
-                    <button class="tab-btn active" onclick="switchAnalyticsTab('overview')">Overview</button>
-                    <button class="tab-btn" onclick="switchAnalyticsTab('trends')">Trends</button>
-                    <button class="tab-btn" onclick="switchAnalyticsTab('comparison')">Comparison</button>
+                    <button class="tab-btn active" onclick="switchAnalyticsTab('overview')">סקירה</button>
+                    <button class="tab-btn" onclick="switchAnalyticsTab('trends')">מגמות</button>
+                    <button class="tab-btn" onclick="switchAnalyticsTab('comparison')">השוואה</button>
                 </div>
 
                 <!-- OVERVIEW -->
                 <div id="analytics-overview" class="analytics-section active">
                     <div class="stats-grid">
                         <div class="stat-box">
-                            <h4>Average Daily Hours</h4>
+                            <h4>ממוצע שעות יומי</h4>
                             <p class="stat-value" id="stat-avg-daily">0.00</p>
                         </div>
                         <div class="stat-box">
-                            <h4>Average Hourly Rate</h4>
+                            <h4>שכר שעתי ממוצע</h4>
                             <p class="stat-value" id="stat-avg-rate">₪0.00</p>
                         </div>
                         <div class="stat-box">
-                            <h4>Total Overtime</h4>
+                            <h4>סה״כ שעות נוספות</h4>
                             <p class="stat-value" id="stat-total-ot">0.00h</p>
                         </div>
                         <div class="stat-box">
-                            <h4>Workplace Count</h4>
+                            <h4>מספר מקומות עבודה</h4>
                             <p class="stat-value" id="stat-workplace-count">0</p>
                         </div>
                     </div>
 
                     <div class="charts-grid">
                         <div class="chart-card">
-                            <h3>Hourly Statistics</h3>
+                            <h3>סטטיסטיקת שעות</h3>
                             <canvas id="statsChart"></canvas>
                         </div>
                         <div class="chart-card">
-                            <h3>Workplace Breakdown</h3>
+                            <h3>פירוט לפי מקום עבודה</h3>
                             <canvas id="workplaceChart"></canvas>
                         </div>
                     </div>
@@ -285,7 +598,7 @@
                 <!-- TRENDS -->
                 <div id="analytics-trends" class="analytics-section" style="display:none;">
                     <div class="card">
-                        <h3>Salary Trends (Last 12 Months)</h3>
+                        <h3>מגמת שכר (12 חודשים אחרונים)</h3>
                         <canvas id="trendsChart" height="100"></canvas>
                     </div>
                 </div>
@@ -294,14 +607,14 @@
                 <div id="analytics-comparison" class="analytics-section" style="display:none;">
                     <div class="comparison-container">
                         <div class="card">
-                            <h3>Month-over-Month Comparison</h3>
+                            <h3>השוואה חודש מול חודש</h3>
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Month</th>
-                                        <th>Hours</th>
-                                        <th>Salary</th>
-                                        <th>Change</th>
+                                        <th>חודש</th>
+                                        <th>שעות</th>
+                                        <th>שכר</th>
+                                        <th>שינוי</th>
                                     </tr>
                                 </thead>
                                 <tbody id="comparison-tbody">
@@ -312,35 +625,103 @@
                 </div>
             </section>
 
+            <!-- SMART ANALYST TAB -->
+            <section id="tab-smart-analyst" class="tab-content">
+                <div class="page-header analyst-header">
+                    <div class="header-content">
+                        <span class="eyebrow"><i class="fas fa-sparkles"></i> ניתוח אישי</span>
+                        <h1>אנליסט חכם</h1>
+                        <p>תמונה ברורה של הקצב שלך, ההכנסה והדברים שכדאי לבדוק.</p>
+                    </div>
+                    <div class="header-actions">
+                        <input type="month" id="analyst-month" class="form-control">
+                        <button class="btn btn-primary" onclick="runSmartAnalysis()"><i class="fas fa-wand-magic-sparkles"></i> נתח עכשיו</button>
+                    </div>
+                </div>
+                <div id="analyst-health" class="analyst-health"></div>
+                <div class="analyst-grid">
+                    <div class="card analyst-summary-card">
+                        <div class="card-kicker">פעילות החודש</div>
+                        <h3><i class="fas fa-gauge-high"></i> מדד עבודה</h3>
+                        <div id="analyst-score" class="analyst-score">--</div>
+                        <p id="analyst-score-label" class="muted-copy">הוסף משמרות כדי לקבל תמונה חכמה.</p>
+                    </div>
+                    <div class="card analyst-summary-card">
+                        <div class="card-kicker">תחזית</div>
+                        <h3><i class="fas fa-arrow-trend-up"></i> תחזית חודשית</h3>
+                        <div id="analyst-forecast" class="analyst-number">₪0</div>
+                        <p id="analyst-forecast-copy" class="muted-copy">הערכה לפי קצב המשמרות שנרשם.</p>
+                    </div>
+                </div>
+                <div class="analyst-grid analyst-grid-wide">
+                    <div class="card">
+                        <div class="card-kicker">המלצות</div>
+                        <h3><i class="fas fa-lightbulb"></i> מה כדאי לדעת</h3>
+                        <div id="analyst-recommendations" class="recommendation-list"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-kicker">חריגות</div>
+                        <h3><i class="fas fa-triangle-exclamation"></i> חריגות לבדיקה</h3>
+                        <div id="analyst-anomalies" class="recommendation-list"></div>
+                    </div>
+                </div>
+                <div class="card analyst-chart-card">
+                    <div class="card-kicker">דפוסי עבודה</div>
+                    <h3><i class="fas fa-chart-area"></i> דפוס עבודה</h3>
+                    <canvas id="analystChart" height="90"></canvas>
+                </div>
+            </section>
+
+            <!-- MONTHLY ESTIMATE TAB -->
+            <section id="tab-monthly-estimate" class="tab-content">
+                <div class="page-header">
+                    <div class="header-content">
+                        <span class="eyebrow"><i class="fas fa-calendar-days"></i> MONTHLY PLANNER</span>
+                        <h1>שכר חודשי משוער</h1>
+                        <p>בחר ימי עבודה, סכום יומי וסוג העסקה כדי לקבל אומדן ברור.</p>
+                    </div>
+                </div>
+                <div id="monthly-estimate-host" class="monthly-estimate-host"></div>
+            </section>
+
             <!-- PAYROLL TAB -->
             <section id="tab-payroll" class="tab-content">
                 <div class="page-header">
-                    <h1>Payroll Management</h1>
-                    <p>תבדוק את התלוש שלך מהמעסיק</p>
+                    <h1>כלי שכר</h1>
+                    <p>בדיקת תלוש, חישוב שכר והיסטוריית תשלומים</p>
                 </div>
 
                 <div class="tabs-horizontal">
-                    <button class="tab-btn active" onclick="switchPayrollTab('audit')">Payroll Audit</button>
-                    <button class="tab-btn" onclick="switchPayrollTab('calculator')">Salary Calculator</button>
-                    <button class="tab-btn" onclick="switchPayrollTab('history')">Payment History</button>
+                    <button class="tab-btn active" onclick="switchPayrollTab('audit')">בדיקת תלוש</button>
+                    <button class="tab-btn" onclick="switchPayrollTab('calculator')">מחשבון שכר</button>
+                    <button class="tab-btn" onclick="switchPayrollTab('history')">היסטוריית תשלומים</button>
                 </div>
+
+                <section class="analyst-inline payroll-analyst-widget" aria-labelledby="payroll-analyst-title">
+                    <div class="analyst-inline-heading"><span class="analyst-inline-mark"><i class="fas fa-chart-line"></i></span><div><p class="eyebrow">תובנות רווחיות</p><h2 id="payroll-analyst-title">המספרים שמאחורי המשמרות</h2></div></div>
+                    <div class="payroll-analyst-metrics">
+                        <div><span>יום רווחי החודש</span><strong id="payroll-analyst-best-day">ממתין לנתונים</strong></div>
+                        <div><span>שווי שעה נטו משוער</span><strong id="payroll-analyst-hourly">--</strong></div>
+                        <div class="analyst-cap-metric"><span>תקרת עוסק פטור</span><strong id="payroll-analyst-cap-copy">--</strong><div class="analyst-cap-meter" role="progressbar" aria-label="ניצול תקרת עוסק פטור" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="payroll-analyst-cap-fill"></span></div></div>
+                    </div>
+                </section>
 
                 <!-- AUDIT -->
                 <div id="payroll-audit" class="payroll-section active">
                     <div class="card">
-                        <h3><i class="fas fa-check-double"></i> Verify Your Payslip</h3>
+                        <h3><i class="fas fa-check-double"></i> אימות תלוש שכר</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Hours on Payslip</label>
+                                <label>שעות בתלוש</label>
                                 <input type="number" id="audit-hours" class="form-control" step="0.5" min="0">
                             </div>
                             <div class="form-group">
-                                <label>Gross Salary on Payslip</label>
+                                <label>שכר ברוטו בתלוש</label>
                                 <input type="number" id="audit-gross" class="form-control" step="1" min="0">
                             </div>
                         </div>
                         <button class="btn btn-primary" onclick="auditPayslip()">
-                            <i class="fas fa-magnifying-glass"></i> Check Discrepancies
+                            <i class="fas fa-magnifying-glass"></i> בדוק פערים
                         </button>
                         <div id="audit-results" class="results-box" style="margin-top: 20px;"></div>
                     </div>
@@ -349,35 +730,80 @@
                 <!-- CALCULATOR -->
                 <div id="payroll-calculator" class="payroll-section" style="display:none;">
                     <div class="card">
-                        <h3><i class="fas fa-calculator"></i> Salary Calculator</h3>
+                        <h3><i class="fas fa-calculator"></i> מחשבון שכר</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Gross Salary (₪)</label>
+                                <label>שכר ברוטו (₪)</label>
                                 <input type="number" id="calc-gross" class="form-control" value="5000" min="0" step="100" oninput="calculateSalaryComponents()">
                             </div>
                             <div class="form-group">
-                                <label>Pension Contribution (%)</label>
+                                <label>הפרשת פנסיה (%)</label>
                                 <input type="number" id="calc-pension" class="form-control" value="6" min="0" max="20" step="0.5" oninput="calculateSalaryComponents()">
                             </div>
                         </div>
                         <div id="calc-breakdown" class="breakdown-box">
-                            <!-- Will be filled by JavaScript -->
                         </div>
+                    </div>
+                    <div class="card monthly-daily-card">
+                        <div class="card-kicker">MONTHLY PLANNER</div>
+                        <h3><i class="fas fa-calendar-days"></i> מחשבון שכר יומי חודשי</h3>
+                        <p class="muted-copy">לדוגמה: 320 ₪ ליום. בחר אילו ימי שבוע נחשבים והחרג תאריכים ספציפיים.</p>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>חודש לחישוב</label>
+                                <input type="month" id="monthly-pay-month" class="form-control" onchange="updateMonthlyDailyCalculator()">
+                            </div>
+                            <div class="form-group">
+                                <label>שכר יומי (₪)</label>
+                                <input type="number" id="monthly-pay-daily" class="form-control" value="320" min="0" step="1" oninput="updateMonthlyDailyCalculator()">
+                            </div>
+                            <div class="form-group">
+                                <label>פנסיה לשכיר (%)</label>
+                                <input type="number" id="monthly-pay-pension" class="form-control" value="6" min="0" max="20" step="0.5" oninput="updateMonthlyDailyCalculator()">
+                            </div>
+                            <div class="form-group">
+                                <label>נקודות זיכוי</label>
+                                <input type="number" id="monthly-pay-credits" class="form-control" value="2.25" min="0" max="10" step="0.25" oninput="updateMonthlyDailyCalculator()">
+                            </div>
+                            <div class="form-group">
+                                <label>סוג חישוב</label>
+                                <select id="monthly-pay-type" class="form-control" onchange="updateMonthlyDailyCalculator()">
+                                    <option value="compare">השוואה בין האפשרויות</option>
+                                    <option value="employee">שכיר רגיל</option>
+                                    <option value="exempt">עצמאי / פרילנסר עוסק פטור</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="weekday-picker" aria-label="ימי עבודה לחישוב">
+                            <span class="field-caption">ימי שבוע לחישוב</span>
+                            <label><input type="checkbox" class="monthly-pay-day" value="0" checked onchange="updateMonthlyDailyCalculator()"> א׳</label>
+                            <label><input type="checkbox" class="monthly-pay-day" value="1" checked onchange="updateMonthlyDailyCalculator()"> ב׳</label>
+                            <label><input type="checkbox" class="monthly-pay-day" value="2" checked onchange="updateMonthlyDailyCalculator()"> ג׳</label>
+                            <label><input type="checkbox" class="monthly-pay-day" value="3" checked onchange="updateMonthlyDailyCalculator()"> ד׳</label>
+                            <label><input type="checkbox" class="monthly-pay-day" value="4" checked onchange="updateMonthlyDailyCalculator()"> ה׳</label>
+                            <label><input type="checkbox" class="monthly-pay-day" value="5" checked onchange="updateMonthlyDailyCalculator()"> ו׳</label>
+                            <label><input type="checkbox" class="monthly-pay-day" value="6" onchange="updateMonthlyDailyCalculator()"> שבת</label>
+                        </div>
+                        <div class="form-group">
+                            <label>תאריכים שלא לחשב</label>
+                            <input type="text" id="monthly-pay-excluded" class="form-control" placeholder="לדוגמה: 2026-10-03, 2026-10-12" oninput="updateMonthlyDailyCalculator()">
+                        </div>
+                        <div id="monthly-pay-result" class="monthly-pay-result"></div>
                     </div>
                 </div>
 
                 <!-- HISTORY -->
                 <div id="payroll-history" class="payroll-section" style="display:none;">
                     <div class="card">
-                        <h3><i class="fas fa-history"></i> Payment History</h3>
+                        <h3><i class="fas fa-history"></i> היסטוריית תשלומים</h3>
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Gross Salary</th>
-                                    <th>Deductions</th>
-                                    <th>Net Salary</th>
-                                    <th>Status</th>
+                                    <th>תאריך</th>
+                                    <th>שכר ברוטו</th>
+                                    <th>ניכויים</th>
+                                    <th>שכר נטו</th>
+                                    <th>סטטוס</th>
                                 </tr>
                             </thead>
                             <tbody id="history-tbody">
@@ -390,31 +816,30 @@
             <!-- TAX PLANNING TAB -->
             <section id="tab-tax-planning" class="tab-content">
                 <div class="page-header">
-                    <h1>Tax Planning & Optimization</h1>
-                    <p>מקימום זכויות מס ותכנון פיסקלי</p>
+                    <h1>מסים</h1>
+                    <p>נקודות זיכוי, מדרגות מס ומחשבון שנתי</p>
                 </div>
 
                 <div class="cards-grid">
                     <div class="card">
-                        <h3><i class="fas fa-award"></i> Tax Credits</h3>
+                        <h3><i class="fas fa-award"></i> נקודות זיכוי</h3>
                         <div class="form-group">
-                            <label>Number of Tax Credits</label>
+                            <label>מספר נקודות זיכוי</label>
                             <select id="tax-credits" class="form-control" onchange="calculateTaxBenefit()">
-                                <option value="0">0 Credits</option>
-                                <option value="1">1 Credit</option>
-                                <option value="2">2 Credits</option>
-                                <option value="2.25" selected>2.25 Credits (Default)</option>
-                                <option value="3">3 Credits</option>
-                                <option value="4">4 Credits</option>
+                                <option value="0">0 נקודות</option>
+                                <option value="1">1 נקודה</option>
+                                <option value="2">2 נקודות</option>
+                                <option value="2.25" selected>2.25 נקודות (ברירת מחדל)</option>
+                                <option value="3">3 נקודות</option>
+                                <option value="4">4 נקודות</option>
                             </select>
                         </div>
                         <div id="tax-credits-result" class="result-box">
-                            <!-- Results will appear here -->
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3><i class="fas fa-percentage"></i> Tax Brackets 2026</h3>
+                        <h3><i class="fas fa-percentage"></i> מדרגות מס 2026</h3>
                         <div class="tax-brackets-list">
                             <div class="bracket-item">
                                 <span class="bracket-range">₪0 - ₪6,330</span>
@@ -444,13 +869,12 @@
                     </div>
 
                     <div class="card">
-                        <h3><i class="fas fa-calculator"></i> Tax Calculator</h3>
+                        <h3><i class="fas fa-calculator"></i> מחשבון מס</h3>
                         <div class="form-group">
-                            <label>Annual Gross Income (₪)</label>
+                            <label>הכנסה שנתית ברוטו (₪)</label>
                             <input type="number" id="tax-income" class="form-control" value="60000" min="0" step="1000" oninput="calculateTaxes()">
                         </div>
                         <div id="tax-calculation-result" class="result-box">
-                            <!-- Results will appear here -->
                         </div>
                     </div>
                 </div>
@@ -459,32 +883,31 @@
             <!-- PENSION TAB -->
             <section id="tab-pension" class="tab-content">
                 <div class="page-header">
-                    <h1>Pension Planning</h1>
-                    <p>תכנון פנסיה וחיסכון לעתיד</p>
+                    <h1>פנסיה</h1>
+                    <p>הפרשות וחיזוי צבירה פנסיונית</p>
                 </div>
 
                 <div class="cards-grid">
                     <div class="card">
-                        <h3><i class="fas fa-piggy-bank"></i> Pension Projection</h3>
+                        <h3><i class="fas fa-piggy-bank"></i> חיזוי פנסיה</h3>
                         <div class="form-group">
-                            <label>Monthly Gross Salary (₪)</label>
+                            <label>שכר ברוטו חודשי (₪)</label>
                             <input type="number" id="pension-salary" class="form-control" value="5000" min="0" step="100" oninput="calculatePensionProjection()">
                         </div>
                         <div class="form-group">
-                            <label>Employee Pension Rate (%)</label>
+                            <label>שיעור פנסיה עובד (%)</label>
                             <input type="number" id="pension-employee" class="form-control" value="6" min="0" max="20" step="0.5" oninput="calculatePensionProjection()">
                         </div>
                         <div class="form-group">
-                            <label>Years Worked</label>
+                            <label>שנות עבודה</label>
                             <input type="number" id="pension-years" class="form-control" value="1" min="0" step="1" oninput="calculatePensionProjection()">
                         </div>
                         <div id="pension-result" class="result-box">
-                            <!-- Results will appear here -->
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3><i class="fas fa-chart-pie"></i> Pension Accumulation Chart</h3>
+                        <h3><i class="fas fa-chart-pie"></i> גרף צבירת פנסיה</h3>
                         <canvas id="pensionChart"></canvas>
                     </div>
                 </div>
@@ -493,31 +916,31 @@
             <!-- INSURANCE TAB -->
             <section id="tab-insurance" class="tab-content">
                 <div class="page-header">
-                    <h1>Insurance & Benefits</h1>
-                    <p>ביטוח בריאות, אובדן כושר עבודה וביטוחים נוספים</p>
+                    <h1>ביטוח</h1>
+                    <p>בריאות, תאונות עבודה ואובדן כושר עבודה</p>
                 </div>
 
                 <div class="tabs-horizontal">
-                    <button class="tab-btn active" onclick="switchInsuranceTab('health')">Health Insurance</button>
-                    <button class="tab-btn" onclick="switchInsuranceTab('work')">Work Accident</button>
-                    <button class="tab-btn" onclick="switchInsuranceTab('disability')">Disability</button>
+                    <button class="tab-btn active" onclick="switchInsuranceTab('health')">ביטוח בריאות</button>
+                    <button class="tab-btn" onclick="switchInsuranceTab('work')">תאונת עבודה</button>
+                    <button class="tab-btn" onclick="switchInsuranceTab('disability')">נכות / אכ״ע</button>
                 </div>
 
                 <div id="insurance-health" class="insurance-section active">
                     <div class="cards-grid">
                         <div class="card">
-                            <h3>Health Insurance Details</h3>
+                            <h3>פרטי ביטוח בריאות</h3>
                             <ul class="benefits-list">
-                                <li><i class="fas fa-check"></i> Doctor visits covered</li>
-                                <li><i class="fas fa-check"></i> Hospitalization covered</li>
-                                <li><i class="fas fa-check"></i> Prescription medications</li>
-                                <li><i class="fas fa-check"></i> Preventive care</li>
+                                <li><i class="fas fa-check"></i> ביקורי רופא מכוסים</li>
+                                <li><i class="fas fa-check"></i> אשפוז מכוסה</li>
+                                <li><i class="fas fa-check"></i> תרופות במרשם</li>
+                                <li><i class="fas fa-check"></i> רפואה מונעת</li>
                             </ul>
                         </div>
                         <div class="card">
-                            <h3>Premium Calculation</h3>
+                            <h3>חישוב פרמיה</h3>
                             <div class="form-group">
-                                <label>Monthly Salary (₪)</label>
+                                <label>שכר חודשי (₪)</label>
                                 <input type="number" id="health-salary" class="form-control" value="5000" min="0" step="100" oninput="calculateHealthInsurance()">
                             </div>
                             <div id="health-result" class="result-box"></div>
@@ -527,23 +950,23 @@
 
                 <div id="insurance-work" class="insurance-section" style="display:none;">
                     <div class="card">
-                        <h3>Work Accident Insurance</h3>
-                        <p>Protected against work-related accidents and injuries.</p>
+                        <h3>ביטוח תאונות עבודה</h3>
+                        <p>הגנה במקרה של תאונה או פגיעה במהלך העבודה.</p>
                         <div class="insurance-info">
-                            <p><strong>Coverage:</strong> Medical treatment, rehabilitation, income loss</p>
-                            <p><strong>Premium:</strong> Employer paid (no employee deduction)</p>
+                            <p><strong>כיסוי:</strong> טיפול רפואי, שיקום ואובדן הכנסה</p>
+                            <p><strong>פרמיה:</strong> משולמת על ידי המעסיק (ללא ניכוי מהעובד)</p>
                         </div>
                     </div>
                 </div>
 
                 <div id="insurance-disability" class="insurance-section" style="display:none;">
                     <div class="card">
-                        <h3>Disability Insurance</h3>
-                        <p>Income protection if you become unable to work.</p>
+                        <h3>ביטוח אובדן כושר עבודה</h3>
+                        <p>הגנה על הכנסה במקרה של אי-יכולת לעבוד.</p>
                         <div class="insurance-info">
-                            <p><strong>Coverage:</strong> Up to 60% of monthly salary</p>
-                            <p><strong>Waiting Period:</strong> 90 days</p>
-                            <p><strong>Maximum Duration:</strong> Until age 65</p>
+                            <p><strong>כיסוי:</strong> עד 60% מהשכר החודשי</p>
+                            <p><strong>תקופת המתנה:</strong> 90 יום</p>
+                            <p><strong>משך מקסימלי:</strong> עד גיל 65</p>
                         </div>
                     </div>
                 </div>
@@ -552,28 +975,28 @@
             <!-- COMPENSATION TAB -->
             <section id="tab-compensation" class="tab-content">
                 <div class="page-header">
-                    <h1>Severance & Compensation Calculator</h1>
-                    <p>חישוב פיצויים, דמי פרישה וכל זכויות סיום עבודה</p>
+                    <h1>פיצויים</h1>
+                    <p>חישוב פיצויי פיטורים וזכויות סיום העסקה</p>
                 </div>
 
                 <div class="card">
-                    <h3><i class="fas fa-handshake"></i> Severance Package Calculator</h3>
+                    <h3><i class="fas fa-handshake"></i> מחשבון פיצויים</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Monthly Gross Salary (₪)</label>
+                            <label>שכר ברוטו חודשי (₪)</label>
                             <input type="number" id="comp-salary" class="form-control" value="5000" min="0" step="100">
                         </div>
                         <div class="form-group">
-                            <label>Years of Service</label>
+                            <label>שנות ותק</label>
                             <input type="number" id="comp-years" class="form-control" value="1" min="0" max="50" step="0.5">
                         </div>
                         <div class="form-group">
-                            <label>Working Days Per Month</label>
+                            <label>ימי עבודה בחודש</label>
                             <input type="number" id="comp-workdays" class="form-control" value="22" min="1" max="31" step="1">
                         </div>
                     </div>
                     <button class="btn btn-primary" onclick="calculateCompensation()">
-                        <i class="fas fa-calculator"></i> Calculate
+                        <i class="fas fa-calculator"></i> חשב
                     </button>
                     <div id="comp-results" class="results-box" style="margin-top: 20px;"></div>
                 </div>
@@ -582,189 +1005,138 @@
             <!-- REPORTS TAB -->
             <section id="tab-reports" class="tab-content">
                 <div class="page-header">
-                    <h1>Reports & Exports</h1>
-                    <p>Generate detailed reports and export your data</p>
+                    <h1>דוחות</h1>
+                    <p>יצירת דוחות וייצוא הנתונים שלך</p>
                 </div>
 
                 <div class="reports-grid">
                     <div class="report-card" onclick="generateMonthlyReport()">
                         <i class="fas fa-file-pdf"></i>
-                        <h4>Monthly Report</h4>
-                        <p>Summary of hours, salary, and taxes</p>
+                        <h4>דוח חודשי</h4>
+                        <p>סיכום שעות, שכר ומסים</p>
                     </div>
                     <div class="report-card" onclick="generateYearlyReport()">
                         <i class="fas fa-file-excel"></i>
-                        <h4>Yearly Summary</h4>
-                        <p>Annual statistics and trends</p>
+                        <h4>סיכום שנתי</h4>
+                        <p>סטטיסטיקה ומגמות שנתיות</p>
                     </div>
                     <div class="report-card" onclick="exportDataJSON()">
                         <i class="fas fa-download"></i>
-                        <h4>Export Data</h4>
-                        <p>Download all your data as JSON</p>
+                        <h4>ייצוא נתונים</h4>
+                        <p>הורדת כל הנתונים כ־JSON</p>
                     </div>
                     <div class="report-card" onclick="exportDataCSV()">
                         <i class="fas fa-table"></i>
-                        <h4>Export CSV</h4>
-                        <p>Import to Excel or other tools</p>
+                        <h4>ייצוא CSV</h4>
+                        <p>לייבוא לאקסל או כלים אחרים</p>
                     </div>
                 </div>
 
                 <div class="card" style="margin-top: 30px;">
-                    <h3><i class="fas fa-file-invoice-dollar"></i> Tax Report</h3>
+                    <h3><i class="fas fa-file-invoice-dollar"></i> דוח מס</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Report Year</label>
+                            <label>שנת דיווח</label>
                             <input type="number" id="tax-report-year" class="form-control" value="2026" min="2020" max="2030">
                         </div>
                     </div>
                     <button class="btn btn-primary" onclick="generateTaxReport()">
-                        <i class="fas fa-file-pdf"></i> Generate Tax Report
+                        <i class="fas fa-file-pdf"></i> צור דוח מס
                     </button>
                     <div id="tax-report-result" style="margin-top: 20px;"></div>
                 </div>
             </section>
 
-            <!-- ABOUT TAB (ENGLISH) -->
+            <!-- ABOUT TAB -->
             <section id="tab-about" class="tab-content">
                 <div class="about-page">
                     <div class="about-header">
-                        <h1>About Ultimate Pro</h1>
+                        <h1>אודות Ultimate Pro</h1>
                     </div>
 
                     <div class="about-container">
                         <div class="about-section">
-                            <h2>About the Application</h2>
+                            <h2>על האפליקציה</h2>
                             <p>
-                                Ultimate Pro is a professional employee management system designed to help individual 
-                                workers, freelancers, and employees track their working hours, manage salary calculations, 
-                                and understand their financial and legal rights.
-                            </p>
-                            <p>
-                                Our mission is to empower employees with the tools and knowledge they need to manage their 
-                                careers effectively, ensure fair compensation, and make informed financial decisions.
+                                Ultimate Pro היא מערכת לניהול משמרות, שכר וזכויות עובדים,
+                                למעקב שעות, חישובי שכר והבנת זכויות תעסוקה.
                             </p>
                         </div>
 
                         <div class="about-section">
-                            <h2>Key Features</h2>
+                            <h2>יכולות עיקריות</h2>
                             <div class="features-list">
                                 <div class="feature-item">
                                     <i class="fas fa-clock"></i>
                                     <div>
-                                        <h4>Shift Tracking</h4>
-                                        <p>Record your work hours with detailed timestamps and break tracking</p>
+                                        <h4>מעקב משמרות</h4>
+                                        <p>רישום שעות עבודה, הפסקות וסוגי יום</p>
                                     </div>
                                 </div>
                                 <div class="feature-item">
                                     <i class="fas fa-calculator"></i>
                                     <div>
-                                        <h4>Salary Calculations</h4>
-                                        <p>Automatic calculation of gross, net, taxes, and deductions</p>
+                                        <h4>חישובי שכר</h4>
+                                        <p>ברוטו, נטו, מסים וניכויים כאומדן</p>
                                     </div>
                                 </div>
                                 <div class="feature-item">
                                     <i class="fas fa-chart-line"></i>
                                     <div>
-                                        <h4>Analytics</h4>
-                                        <p>Visualize your earning trends and work patterns</p>
+                                        <h4>ניתוח</h4>
+                                        <p>מגמות שכר ודפוסי עבודה</p>
                                     </div>
                                 </div>
                                 <div class="feature-item">
                                     <i class="fas fa-piggy-bank"></i>
                                     <div>
-                                        <h4>Pension Planning</h4>
-                                        <p>Project your retirement savings and pension income</p>
+                                        <h4>פנסיה</h4>
+                                        <p>חיזוי הפרשות וצבירה</p>
                                     </div>
                                 </div>
                                 <div class="feature-item">
                                     <i class="fas fa-shield-alt"></i>
                                     <div>
-                                        <h4>Benefits & Insurance</h4>
-                                        <p>Understand your insurance coverage and benefits</p>
+                                        <h4>ביטוח וזכויות</h4>
+                                        <p>מידע על כיסויים והטבות</p>
                                     </div>
                                 </div>
                                 <div class="feature-item">
                                     <i class="fas fa-file-pdf"></i>
                                     <div>
-                                        <h4>Reports</h4>
-                                        <p>Generate detailed reports for taxes and verification</p>
+                                        <h4>דוחות</h4>
+                                        <p>ייצוא ודוחות לאימות ומעקב</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="about-section">
-                            <h2>Developer</h2>
+                            <h2>מפתח</h2>
                             <div class="developer-card">
-                                <h3>Or Dadshev</h3>
-                                <p class="role">Software Developer & Creator</p>
+                                <h3>אור דדשב</h3>
+                                <p class="role">מפתח תוכנה ויוצר האפליקציה</p>
                                 <p>
-                                    Ultimate Pro was developed by Or Dadshev as a solution to help workers better understand 
-                                    and manage their employment rights and financial situations. This application combines 
-                                    technical expertise with a deep understanding of Israeli labor law and employee rights.
+                                    Ultimate Pro פותחה כדי לעזור לעובדים להבין ולנהל
+                                    את זכויותיהם ואת מצבם הכלכלי בצורה ברורה יותר.
                                 </p>
-                                <div class="developer-info">
-                                    <p><strong>Skills:</strong> Full-Stack Development, Financial Calculations, UI/UX Design</p>
-                                    <p><strong>Focus:</strong> Employee Empowerment & Financial Literacy</p>
-                                </div>
                             </div>
                         </div>
 
                         <div class="about-section">
-                            <h2>Legal Disclaimer</h2>
+                            <h2>הצהרת אחריות</h2>
                             <div class="disclaimer-box">
                                 <p>
-                                    <strong>⚠️ IMPORTANT NOTICE:</strong>
-                                </p>
-                                <p>
-                                    Ultimate Pro is a financial and employment management tool designed for informational 
-                                    and calculation purposes only. It does NOT serve as a replacement for:
-                                </p>
-                                <ul>
-                                    <li>Professional legal advice from a licensed attorney</li>
-                                    <li>Tax consultation from a certified accountant or tax advisor</li>
-                                    <li>Professional financial planning advice</li>
-                                    <li>Official government employment services</li>
-                                </ul>
-                                <p>
-                                    While we strive for accuracy, calculations and information provided by this application 
-                                    may contain errors or be subject to change due to tax law updates, regulatory changes, or 
-                                    other factors. Always verify information with official sources and professionals before 
-                                    making important decisions.
-                                </p>
-                                <p>
-                                    The developer (Or Dadshev) and all associated parties are not responsible for any decisions 
-                                    made based on this application's calculations or information. Users assume full responsibility 
-                                    for verifying all information with appropriate authorities and professionals.
+                                    <strong>שימו לב:</strong>
+                                    החישובים באפליקציה הם הערכות בלבד ואינם מהווים תלוש שכר רשמי,
+                                    ייעוץ משפטי, ייעוץ מס או ייעוץ פיננסי. יש לאמת מול המעסיק ומקורות רשמיים.
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="about-section">
-                            <h2>Rights & Responsibilities</h2>
-                            <p>
-                                As an employee in Israel, you have significant legal protections under Israeli labor law. 
-                                This application helps you understand your rights, but professional consultation is essential 
-                                for specific situations.
-                            </p>
-                            <p>
-                                Key areas covered by Israeli law include working hours, minimum wage, overtime, vacation days, 
-                                severance pay, pension contributions, and protection from discrimination and harassment.
-                            </p>
-                        </div>
-
-                        <div class="about-section">
-                            <h2>Contact & Support</h2>
-                            <p>
-                                For issues, suggestions, or questions about Ultimate Pro, please use the Support section 
-                                of this application or contact through available support channels.
-                            </p>
                         </div>
 
                         <div class="about-footer">
-                            <p>Ultimate Pro v2.0.0</p>
-                            <p>© 2026 Or Dadshev. All rights reserved.</p>
-                            <p class="version-info">Last Updated: August 30, 2026</p>
+                            <p>Ultimate Pro v2.1.1</p>
+                            <p>© 2026 אור דדשב. כל הזכויות שמורות.</p>
                         </div>
                     </div>
                 </div>
@@ -773,76 +1145,76 @@
             <!-- SUPPORT TAB -->
             <section id="tab-support" class="tab-content">
                 <div class="page-header">
-                    <h1>Help & Support</h1>
-                    <p>Get assistance and learn how to use Ultimate Pro effectively</p>
+                    <h1>תמיכה</h1>
+                    <p>שאלות נפוצות וקישורים שימושיים</p>
                 </div>
 
                 <div class="support-container">
                     <div class="faq-section">
-                        <h2><i class="fas fa-question-circle"></i> Frequently Asked Questions</h2>
+                        <h2><i class="fas fa-question-circle"></i> שאלות נפוצות</h2>
                         
                         <div class="faq-item">
                             <button class="faq-question" onclick="toggleFAQ(this)">
-                                <span>How do I add a new shift?</span>
+                                <span>איך מוסיפים משמרת חדשה?</span>
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="faq-answer">
-                                <p>Click the "Add Shift" button on the Dashboard, fill in your work details including start time, end time, and any breaks, then save.</p>
+                                <p>בלחיצה על «הוסף משמרת» בלוח הבקרה, מלאו תאריך, שעות ומקום עבודה ושמרו.</p>
                             </div>
                         </div>
 
                         <div class="faq-item">
                             <button class="faq-question" onclick="toggleFAQ(this)">
-                                <span>How accurate are the salary calculations?</span>
+                                <span>עד כמה מדויקים חישובי השכר?</span>
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="faq-answer">
-                                <p>Calculations are based on 2026 Israeli tax brackets and regulations, but may differ from actual payslips due to individual circumstances. Always verify with your employer.</p>
+                                <p>החישובים מבוססים על מדרגות מס וכללים כלליים ל־2026. הם הערכות בלבד ולא תלוש רשמי; יש לאמת אותם מול המעסיק.</p>
                             </div>
                         </div>
 
                         <div class="faq-item">
                             <button class="faq-question" onclick="toggleFAQ(this)">
-                                <span>Can I export my data?</span>
+                                <span>האם אפשר לייצא נתונים?</span>
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="faq-answer">
-                                <p>Yes! Visit the Reports section to export your data as JSON or CSV format.</p>
+                                <p>כן. במסך דוחות ניתן לייצא JSON או CSV.</p>
                             </div>
                         </div>
 
                         <div class="faq-item">
                             <button class="faq-question" onclick="toggleFAQ(this)">
-                                <span>Is my data private and secure?</span>
+                                <span>האם הנתונים שלי מאובטחים?</span>
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="faq-answer">
-                                <p>All data is stored locally in your browser. No information is sent to external servers. We cannot access your data.</p>
+                                <p>כל הנתונים נשמרים מקומית במכשיר שלך. אין שליחה לשרתים חיצוניים.</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="contact-section">
-                        <h2><i class="fas fa-envelope"></i> Get Help</h2>
+                        <h2><i class="fas fa-envelope"></i> יצירת קשר</h2>
                         <div class="contact-info">
-                            <p>For technical issues or feature requests, please provide as much detail as possible about your problem.</p>
+                            <p>לתקלות או לבקשות לשיפורים, פרטו ככל האפשר.</p>
                             <button class="btn btn-primary" onclick="openContactForm()">
-                                <i class="fas fa-paper-plane"></i> Send Message
+                                <i class="fas fa-paper-plane"></i> שלח הודעה
                             </button>
                         </div>
                     </div>
 
                     <div class="resources-section">
-                        <h2><i class="fas fa-book"></i> Useful Resources</h2>
+                        <h2><i class="fas fa-book"></i> מקורות שימושיים</h2>
                         <ul class="resources-list">
                             <li><a href="https://www.gov.il/he/departments/ministry_of_labor" target="_blank">
-                                Ministry of Labor (Israel) <i class="fas fa-external-link-alt"></i>
+                                משרד העבודה <i class="fas fa-external-link-alt"></i>
                             </a></li>
                             <li><a href="https://www.histadrut.org.il/" target="_blank">
-                                Histadrut (Union) <i class="fas fa-external-link-alt"></i>
+                                ההסתדרות <i class="fas fa-external-link-alt"></i>
                             </a></li>
                             <li><a href="https://www.tax.gov.il/" target="_blank">
-                                Israel Tax Authority <i class="fas fa-external-link-alt"></i>
+                                רשות המסים <i class="fas fa-external-link-alt"></i>
                             </a></li>
                         </ul>
                     </div>
@@ -852,62 +1224,70 @@
             <!-- SETTINGS TAB -->
             <section id="tab-settings" class="tab-content">
                 <div class="page-header">
-                    <h1>Settings</h1>
-                    <p>Customize your application preferences</p>
+                    <h1>הגדרות</h1>
+                    <p>מראה, מקומות עבודה והעדפות חישוב</p>
                 </div>
 
                 <div class="settings-grid">
                     <div class="settings-section">
-                        <h3><i class="fas fa-palette"></i> Appearance</h3>
+                        <h3><i class="fas fa-palette"></i> מראה</h3>
                         <div class="setting-item">
-                            <label>Theme</label>
+                            <label>ערכת נושא</label>
                             <div class="theme-options">
                                 <button class="theme-btn" onclick="setTheme('light')">
-                                    <i class="fas fa-sun"></i> Light
+                                    <i class="fas fa-sun"></i> בהיר
                                 </button>
                                 <button class="theme-btn" onclick="setTheme('dark')">
-                                    <i class="fas fa-moon"></i> Dark
+                                    <i class="fas fa-moon"></i> כהה
                                 </button>
                                 <button class="theme-btn" onclick="setTheme('auto')">
-                                    <i class="fas fa-circle-half-stroke"></i> Auto
+                                    <i class="fas fa-circle-half-stroke"></i> אוטומטי
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     <div class="settings-section">
-                        <h3><i class="fas fa-briefcase"></i> Workplace Management</h3>
+                        <h3><i class="fas fa-briefcase"></i> ניהול מקומות עבודה</h3>
                         <button class="btn btn-primary" onclick="openWorkplaceModal()">
-                            <i class="fas fa-plus"></i> Add Workplace
+                            <i class="fas fa-plus"></i> הוסף מקום עבודה
                         </button>
                         <div id="workplaces-list" style="margin-top: 15px;"></div>
                     </div>
 
                     <div class="settings-section">
-                        <h3><i class="fas fa-cog"></i> General Settings</h3>
+                        <h3><i class="fas fa-cog"></i> הגדרות כלליות</h3>
                         <div class="setting-item">
-                            <label>Default Travel Allowance (₪)</label>
+                            <label>דמי נסיעות ברירת מחדל (₪)</label>
                             <input type="number" id="setting-travel" class="form-control" value="25" min="0" step="1">
                         </div>
                         <div class="setting-item">
-                            <label>Pension Contribution Rate (%)</label>
+                            <label>שיעור פנסיה עובד (%)</label>
                             <input type="number" id="setting-pension" class="form-control" value="6" min="0" max="20" step="0.5">
                         </div>
+                        <div class="setting-item">
+                            <label>נקודות זיכוי ממס</label>
+                            <input type="number" id="setting-credits" class="form-control" value="2.25" min="0" max="10" step="0.25">
+                        </div>
+                        <div class="setting-item">
+                            <label>החלפת קוד גישה (PIN)</label>
+                            <input type="password" id="setting-pin" class="form-control" placeholder="השאר ריק כדי לא לשנות" minlength="4" maxlength="32" autocomplete="new-password">
+                        </div>
                         <button class="btn btn-primary" onclick="saveSettings()">
-                            <i class="fas fa-save"></i> Save Settings
+                            <i class="fas fa-save"></i> שמור הגדרות
                         </button>
                     </div>
 
                     <div class="settings-section">
-                        <h3><i class="fas fa-database"></i> Data Management</h3>
+                        <h3><i class="fas fa-database"></i> ניהול נתונים</h3>
                         <button class="btn btn-secondary" onclick="exportAllData()">
-                            <i class="fas fa-download"></i> Export All Data
+                            <i class="fas fa-download"></i> ייצוא כל הנתונים
                         </button>
                         <button class="btn btn-secondary" onclick="importData()">
-                            <i class="fas fa-upload"></i> Import Data
+                            <i class="fas fa-upload"></i> ייבוא נתונים
                         </button>
                         <button class="btn btn-danger" onclick="resetAll()">
-                            <i class="fas fa-trash"></i> Delete All Data
+                            <i class="fas fa-trash"></i> מחיקת כל הנתונים
                         </button>
                     </div>
                 </div>
@@ -916,37 +1296,37 @@
             <!-- PROFILE TAB -->
             <section id="tab-profile" class="tab-content">
                 <div class="page-header">
-                    <h1>My Profile</h1>
-                    <p>Manage your personal information</p>
+                    <h1>הפרופיל שלי</h1>
+                    <p>עדכון פרטים אישיים</p>
                 </div>
 
                 <div class="profile-container">
                     <div class="profile-header">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%233b82f6'/%3E%3Cpath d='M 30 80 Q 50 60 70 80' fill='%233b82f6'/%3E%3C/svg%3E" alt="Profile" class="profile-avatar-large">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%233b82f6'/%3E%3Cpath d='M 30 80 Q 50 60 70 80' fill='%233b82f6'/%3E%3C/svg%3E" alt="פרופיל" class="profile-avatar-large">
                         <div class="profile-info">
-                            <h2 id="profile-name">Employee</h2>
-                            <p id="profile-id">ID: -</p>
+                            <h2 id="profile-name">משתמש</h2>
+                            <p id="profile-id">מזהה: -</p>
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3>Profile Information</h3>
+                        <h3>פרטי פרופיל</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Full Name</label>
+                                <label>שם מלא</label>
                                 <input type="text" id="profile-fullname" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label>Email</label>
+                                <label>אימייל</label>
                                 <input type="email" id="profile-email" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label>Phone</label>
+                                <label>טלפון</label>
                                 <input type="tel" id="profile-phone" class="form-control">
                             </div>
                         </div>
                         <button class="btn btn-primary" onclick="saveProfile()">
-                            <i class="fas fa-save"></i> Save Profile
+                            <i class="fas fa-save"></i> שמור פרופיל
                         </button>
                     </div>
                 </div>
@@ -958,56 +1338,67 @@
     <div id="shift-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="shift-modal-title">Add Shift</h2>
+                <h2 id="shift-modal-title">הוסף משמרת</h2>
                 <button class="close-btn" onclick="closeShiftModal()">×</button>
             </div>
             <form id="shift-form" onsubmit="saveShift(event)">
                 <input type="hidden" id="shift-id">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Date</label>
+                        <label>תאריך</label>
                         <input type="date" id="shift-date" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>Workplace</label>
+                        <label>מקום עבודה</label>
                         <select id="shift-workplace" class="form-control" required></select>
                     </div>
                     <div class="form-group">
-                        <label>Start Time</label>
-                        <input type="time" id="shift-start" class="form-control" required>
+                        <label>שיטת תשלום</label>
+                        <select id="shift-pay-type" class="form-control" onchange="updateShiftPayMode()">
+                            <option value="hourly">לפי שעה</option>
+                            <option value="daily">שכר יומי</option>
+                        </select>
                     </div>
-                    <div class="form-group">
-                        <label>End Time</label>
-                        <input type="time" id="shift-end" class="form-control" required>
+                    <div class="form-group" id="daily-wage-group" style="display:none;">
+                        <label>סכום יומי (₪)</label>
+                        <input type="number" id="shift-daily-wage" class="form-control" min="0" step="1" placeholder="לדוגמה: 450">
                     </div>
-                    <div class="form-group">
-                        <label>Break (minutes)</label>
+                    <div class="form-group shift-hourly-field">
+                        <label>שעת התחלה</label>
+                        <input type="time" id="shift-start" class="form-control">
+                    </div>
+                    <div class="form-group shift-hourly-field">
+                        <label>שעת סיום</label>
+                        <input type="time" id="shift-end" class="form-control">
+                    </div>
+                    <div class="form-group shift-hourly-field">
+                        <label>הפסקה (דקות)</label>
                         <input type="number" id="shift-break" class="form-control" value="0" min="0" step="15">
                     </div>
-                    <div class="form-group">
-                        <label>Day Type</label>
+                    <div class="form-group shift-hourly-field">
+                        <label>סוג יום</label>
                         <select id="shift-daytype" class="form-control">
-                            <option value="regular">Regular</option>
-                            <option value="friday">Friday/Holiday Eve</option>
-                            <option value="saturday">Saturday/Holiday</option>
+                            <option value="regular">רגיל</option>
+                            <option value="friday">שישי/ערב חג</option>
+                            <option value="saturday">שבת/חג</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Tips (₪)</label>
+                        <label>טיפים (₪)</label>
                         <input type="number" id="shift-tips" class="form-control" value="0" min="0" step="1">
                     </div>
                     <div class="form-group">
-                        <label>Travel Allowance (₪)</label>
+                        <label>דמי נסיעות (₪)</label>
                         <input type="number" id="shift-travel" class="form-control" value="0" min="0" step="1">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Notes</label>
-                    <textarea id="shift-notes" class="form-control" rows="3" placeholder="Optional notes"></textarea>
+                    <label>הערות</label>
+                    <textarea id="shift-notes" class="form-control" rows="3" placeholder="הערות אופציונליות"></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeShiftModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Shift</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeShiftModal()">ביטול</button>
+                    <button type="submit" class="btn btn-primary">שמור משמרת</button>
                 </div>
             </form>
         </div>
@@ -1016,28 +1407,38 @@
     <div id="workplace-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="workplace-modal-title">Add Workplace</h2>
+                <h2 id="workplace-modal-title">הוסף מקום עבודה</h2>
                 <button class="close-btn" onclick="closeWorkplaceModal()">×</button>
             </div>
             <form id="workplace-form" onsubmit="saveWorkplace(event)">
                 <input type="hidden" id="workplace-id">
                 <div class="form-group">
-                    <label>Workplace Name</label>
-                    <input type="text" id="workplace-name" class="form-control" placeholder="e.g., Supermarket" required>
+                    <label>שם מקום העבודה</label>
+                    <input type="text" id="workplace-name" class="form-control" placeholder="לדוגמה: סופרמרקט" required>
                 </div>
                 <div class="form-group">
-                    <label>Hourly Rate (₪)</label>
+                    <label>שכר שעתי (₪)</label>
                     <input type="number" id="workplace-rate" class="form-control" min="1" step="0.5" required>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeWorkplaceModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Workplace</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeWorkplaceModal()">ביטול</button>
+                    <button type="submit" class="btn btn-primary">שמור מקום עבודה</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Scripts -->
+    <script src="src/renderer/shared/accountStorage.js"></script>
+    <script src="src/renderer/apps/registry.js"></script>
+    <script src="src/renderer/shared/profile.js"></script>
+    <script src="src/renderer/shared/clock.js"></script>
+    <script src="src/renderer/shared/coalesced-task.js"></script>
+    <script src="src/renderer/shared/analystEngine.js"></script>
+    <script src="src/renderer/apps/finance/finance-model.js"></script>
+    <script src="src/renderer/apps/finance/finance.js"></script>
+    <script src="src/renderer/apps/calendar/calendar.js"></script>
+    <script src="src/renderer/apps/driveSync.js"></script>
     <script src="utils.js"></script>
     <script src="modules.js"></script>
     <script src="utilities-extended.js"></script>

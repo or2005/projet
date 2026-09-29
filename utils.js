@@ -202,7 +202,8 @@ const Utils = {
 
 const TaxCalculator = {
     /**
-     * Israeli tax brackets 2026
+     * Approximate monthly income-tax brackets (withholding model, 2026).
+     * Estimates only — not an official payslip.
      */
     TAX_BRACKETS: [
         { from: 0, to: 6330, rate: 0.10 },
@@ -213,23 +214,35 @@ const TaxCalculator = {
         { from: 43200, Infinity, rate: 0.49 }
     ],
 
+    /** Monthly value of one tax credit point (approx.) */
+    CREDIT_POINT_VALUE: 242,
+
+    /** Legacy map kept for UI helpers (points → monthly ₪) */
     TAX_CREDITS: {
         0: 0,
-        1: 278,
-        2: 556,
-        2.25: 625,
-        3: 834,
-        4: 1112
+        1: 242,
+        2: 484,
+        2.25: 544.5,
+        3: 726,
+        4: 968
     },
 
-    /**
-     * Calculate progressive tax
-     */
-    calculateProgressiveTax(grossSalary) {
-        let tax = 0;
-        let remaining = grossSalary;
+    /** National Insurance thresholds (approx. monthly, employed) */
+    NI_REDUCED_CEILING: 7522,
+    NI_MAX_INSURABLE: 50695,
+    NI_RATE_REDUCED: 0.004,
+    NI_RATE_FULL: 0.07,
+    HEALTH_RATE_REDUCED: 0.031,
+    HEALTH_RATE_FULL: 0.05,
 
-        for (let bracket of this.TAX_BRACKETS) {
+    /**
+     * Progressive income tax on a monthly gross amount (before credit points).
+     */
+    calculateProgressiveTax(monthlyGross) {
+        let tax = 0;
+        let remaining = Math.max(0, Number(monthlyGross) || 0);
+
+        for (const bracket of this.TAX_BRACKETS) {
             if (remaining <= 0) break;
             const bracketSize = bracket.to - bracket.from;
             const taxableInBracket = Math.min(remaining, bracketSize);
@@ -240,41 +253,83 @@ const TaxCalculator = {
         return tax;
     },
 
+    calculateNationalInsurance(monthlyGross) {
+        const taxable = Math.min(Math.max(0, monthlyGross), this.NI_MAX_INSURABLE);
+        if (taxable <= this.NI_REDUCED_CEILING) {
+            return taxable * this.NI_RATE_REDUCED;
+        }
+        return this.NI_REDUCED_CEILING * this.NI_RATE_REDUCED
+            + (taxable - this.NI_REDUCED_CEILING) * this.NI_RATE_FULL;
+    },
+
+    calculateHealthInsurance(monthlyGross) {
+        const taxable = Math.min(Math.max(0, monthlyGross), this.NI_MAX_INSURABLE);
+        if (taxable <= this.NI_REDUCED_CEILING) {
+            return taxable * this.HEALTH_RATE_REDUCED;
+        }
+        return this.NI_REDUCED_CEILING * this.HEALTH_RATE_REDUCED
+            + (taxable - this.NI_REDUCED_CEILING) * this.HEALTH_RATE_FULL;
+    },
+
     /**
-     * Calculate total deductions
+     * Monthly deductions for a monthly gross salary.
+     * @param {number} monthlyGross
+     * @param {number} pensionRate employee pension %
+     * @param {number} creditPoints tax credit points (default resident ~2.25)
      */
-    calculateDeductions(grossSalary, pensionRate = 6, healthInsurance = 0) {
-        const incomeTax = this.calculateProgressiveTax(grossSalary);
-        const employeePension = (grossSalary * pensionRate) / 100;
-        const nationalInsurance = (grossSalary * 3.45) / 100;
-        const healthIns = healthInsurance || (grossSalary * 3.1) / 100;
+    calculateDeductions(monthlyGross, pensionRate = 6, creditPoints = 2.25) {
+        const gross = Math.max(0, Number(monthlyGross) || 0);
+        const rawTax = this.calculateProgressiveTax(gross);
+        const taxCredits = (Number(creditPoints) || 0) * this.CREDIT_POINT_VALUE;
+        const incomeTax = Math.max(0, rawTax - taxCredits);
+        const employeePension = (gross * (Number(pensionRate) || 0)) / 100;
+        const nationalInsurance = this.calculateNationalInsurance(gross);
+        const healthInsurance = this.calculateHealthInsurance(gross);
+        const total = incomeTax + employeePension + nationalInsurance + healthInsurance;
 
         return {
             incomeTax,
+            incomeTaxBeforeCredits: rawTax,
+            taxCredits,
             employeePension,
             nationalInsurance,
-            healthInsurance: healthIns,
-            total: incomeTax + employeePension + nationalInsurance + healthIns
+            healthInsurance,
+            total
         };
     },
 
     /**
-     * Calculate net salary
+     * Net from monthly gross (default). Pass period: 'annual' for yearly income.
      */
-    calculateNetSalary(grossSalary, pensionRate = 6, credits = 0) {
-        const deductions = this.calculateDeductions(grossSalary, pensionRate);
-        const creditValue = (credits * this.TAX_CREDITS[2.25]) / 100;
-        const adjustedTax = Math.max(0, deductions.incomeTax - creditValue);
-        
+    calculateNetSalary(grossSalary, pensionRate = 6, credits = 2.25, period = 'monthly') {
+        const gross = Math.max(0, Number(grossSalary) || 0);
+
+        if (period === 'annual') {
+            const monthly = gross / 12;
+            const monthlyResult = this.calculateNetSalary(monthly, pensionRate, credits, 'monthly');
+            return {
+                gross,
+                totalDeductions: monthlyResult.totalDeductions * 12,
+                net: monthlyResult.net * 12,
+                breakdown: {
+                    ...monthlyResult.breakdown,
+                    incomeTax: monthlyResult.breakdown.incomeTax * 12,
+                    incomeTaxBeforeCredits: monthlyResult.breakdown.incomeTaxBeforeCredits * 12,
+                    taxCredits: monthlyResult.breakdown.taxCredits * 12,
+                    employeePension: monthlyResult.breakdown.employeePension * 12,
+                    nationalInsurance: monthlyResult.breakdown.nationalInsurance * 12,
+                    healthInsurance: monthlyResult.breakdown.healthInsurance * 12,
+                    total: monthlyResult.breakdown.total * 12
+                }
+            };
+        }
+
+        const deductions = this.calculateDeductions(gross, pensionRate, credits);
         return {
-            gross: grossSalary,
-            totalDeductions: deductions.total - deductions.incomeTax + adjustedTax,
-            net: grossSalary - (deductions.total - deductions.incomeTax + adjustedTax),
-            breakdown: {
-                ...deductions,
-                incomeTax: adjustedTax,
-                taxCredits: creditValue
-            }
+            gross,
+            totalDeductions: deductions.total,
+            net: gross - deductions.total,
+            breakdown: { ...deductions }
         };
     }
 };
@@ -316,7 +371,7 @@ const PensionCalculator = {
     /**
      * Full pension projection
      */
-    projectedPension(monthlyGross, employeeRate = 6, employerRate = 6, yearsWorked = 1) {
+    projectedPension(monthlyGross, employeeRate = 6, employerRate = 6.5, yearsWorked = 1) {
         const employeeContribution = (monthlyGross * employeeRate) / 100;
         const employerContribution = (monthlyGross * employerRate) / 100;
         const totalMonthly = employeeContribution + employerContribution;
@@ -341,64 +396,69 @@ const PensionCalculator = {
 
 const SeveranceCalculator = {
     /**
-     * Calculate severance pay
+     * Severance under Israeli Severance Pay Law: ~1 monthly salary per year.
      */
     calculateSeverance(monthlyGross, yearsWorked) {
-        let multiplier;
-
-        if (yearsWorked < 1) {
-            multiplier = yearsWorked; // Proportional
-        } else if (yearsWorked === 1) {
-            multiplier = 1;
-        } else if (yearsWorked <= 15) {
-            multiplier = 1.5;
-        } else {
-            multiplier = 2;
-        }
-
-        return monthlyGross * multiplier;
+        const years = Math.max(0, Number(yearsWorked) || 0);
+        return Math.max(0, Number(monthlyGross) || 0) * years;
     },
 
     /**
-     * Calculate vacation days
+     * Annual vacation days (approx. 5-day work week, Annual Vacation Law).
      */
     calculateVacationDays(yearsWorked) {
-        return Math.max(11, Math.min(22, 11 + Math.floor((yearsWorked - 1) / 2)));
+        const years = Math.max(0, Number(yearsWorked) || 0);
+        if (years <= 0) return 0;
+        if (years < 1) return Math.max(1, Math.ceil(16 * years));
+        if (years <= 5) return 16;
+        if (years === 6) return 18;
+        if (years === 7) return 19;
+        if (years === 8) return 20;
+        if (years === 9) return 21;
+        if (years === 10) return 22;
+        return Math.min(28, 22 + Math.floor(years - 10));
     },
 
-    /**
-     * Calculate vacation pay
-     */
     calculateVacationPay(dailyWage, yearsWorked) {
-        const days = this.calculateVacationDays(yearsWorked);
-        return dailyWage * days;
+        return dailyWage * this.calculateVacationDays(yearsWorked);
     },
 
     /**
-     * Calculate recuperation days (Hbra'ah)
+     * Recuperation (הבראה) days by seniority — common extension-order scale.
      */
-    calculateRecuperation(dailyWage) {
-        const days = 5;
-        return dailyWage * days;
+    calculateRecuperationDays(yearsWorked) {
+        const years = Math.max(0, Number(yearsWorked) || 0);
+        if (years < 1) return 0;
+        if (years < 2) return 5;
+        if (years <= 3) return 6;
+        if (years <= 10) return 7;
+        if (years <= 15) return 8;
+        if (years <= 19) return 9;
+        return 10;
     },
 
-    /**
-     * Calculate compensation details
-     */
+    calculateRecuperation(dailyWage, yearsWorked = 1) {
+        return dailyWage * this.calculateRecuperationDays(yearsWorked);
+    },
+
     fullCompensationDetails(monthlyGross, yearsWorked, workingDaysPerMonth = 22) {
-        const dailyWage = monthlyGross / workingDaysPerMonth;
+        const daysPerMonth = workingDaysPerMonth || 22;
+        const dailyWage = (Number(monthlyGross) || 0) / daysPerMonth;
         const severance = this.calculateSeverance(monthlyGross, yearsWorked);
-        const vacation = this.calculateVacationPay(dailyWage, yearsWorked);
-        const recuperation = this.calculateRecuperation(dailyWage);
+        const vacationDays = this.calculateVacationDays(yearsWorked);
+        const recuperationDays = this.calculateRecuperationDays(yearsWorked);
+        const vacationPay = dailyWage * vacationDays;
+        const recuperationPay = dailyWage * recuperationDays;
 
         return {
             dailyWage,
             severance,
-            vacationDays: this.calculateVacationDays(yearsWorked),
-            vacationPay: vacation,
-            recuperationDays: 5,
-            recuperationPay: recuperation,
-            totalCompensation: severance + vacation + recuperation
+            vacationDays,
+            vacationPay,
+            recuperationDays,
+            recuperationPay,
+            totalCompensation: severance + vacationPay + recuperationPay,
+            disclaimer: 'אומדן בלבד — לא מחליף ייעוץ משפטי או תלוש רשמי'
         };
     }
 };
@@ -409,69 +469,84 @@ const SeveranceCalculator = {
 
 const OvertimeCalculator = {
     /**
-     * Calculate overtime pay
+     * Hours of Work and Rest Law (simplified hourly model):
+     * - Regular day: first 8h @ 100%, next 2h OT @ 125%, beyond @ 150%
+     * - Friday: industry-style 125% on regular hours; OT on base rates
+     * - Saturday / holiday: 150% on all hours
      */
-    calculateOvertime(regularHours, overtimeHours, hourlyRate, overtimeMultiplier = 1.25) {
-        return (overtimeHours * hourlyRate * overtimeMultiplier);
+    calculateOvertimePay(ot125Hours, ot150Hours, hourlyRate) {
+        return ot125Hours * hourlyRate * 1.25 + ot150Hours * hourlyRate * 1.5;
     },
 
-    /**
-     * Calculate weekend multiplier
-     */
+    /** @deprecated use calculateOvertimePay — kept for compatibility */
+    calculateOvertime(regularHours, overtimeHours, hourlyRate, overtimeMultiplier = 1.25) {
+        return overtimeHours * hourlyRate * overtimeMultiplier;
+    },
+
     getWeekendMultiplier(dayOfWeek) {
-        // 5 = Friday, 6 = Saturday, 0 = Sunday
         const multipliers = {
-            0: 1.3,  // Sunday
-            1: 1.0,  // Monday
-            2: 1.0,  // Tuesday
-            3: 1.0,  // Wednesday
-            4: 1.0,  // Thursday
-            5: 1.25, // Friday
-            6: 1.5   // Saturday
+            0: 1.0,
+            1: 1.0,
+            2: 1.0,
+            3: 1.0,
+            4: 1.0,
+            5: 1.25,
+            6: 1.5
         };
         return multipliers[dayOfWeek] || 1.0;
     },
 
-    /**
-     * Calculate holiday multiplier
-     */
     getHolidayMultiplier(isHoliday, isWeekend = false) {
         if (isHoliday) return 1.5;
         if (isWeekend) return 1.5;
         return 1.0;
     },
 
-    /**
-     * Calculate break deduction
-     */
     calculateBreakDeduction(breakMinutes, hourlyRate) {
-        const breakHours = breakMinutes / 60;
-        return breakHours * hourlyRate;
+        return (breakMinutes / 60) * hourlyRate;
     },
 
-    /**
-     * Full shift calculation
-     */
     calculateFullShift(startTime, endTime, breakMinutes, hourlyRate, dayType = 'regular') {
+        const rate = Math.max(0, Number(hourlyRate) || 0);
         const hours = Utils.calculateHoursBetween(startTime, endTime);
-        const breakHours = breakMinutes / 60;
+        const breakHours = (Number(breakMinutes) || 0) / 60;
         const netHours = Math.max(0, hours - breakHours);
-        
-        const regularHours = Math.min(netHours, 8);
-        const overtimeHours = Math.max(0, netHours - 8);
+        const type = (dayType || 'regular').toLowerCase();
 
-        const multiplier = dayType === 'saturday' ? 1.5 : (dayType === 'friday' ? 1.25 : 1.0);
-        
-        const baseEarn = regularHours * hourlyRate * multiplier;
-        const overtimeEarn = overtimeHours * hourlyRate * 1.25 * multiplier;
+        if (type === 'saturday' || type === 'holiday') {
+            const total = netHours * rate * 1.5;
+            return {
+                hours: netHours,
+                regularHours: netHours,
+                overtimeHours: 0,
+                overtime125Hours: 0,
+                overtime150Hours: 0,
+                breakMinutes: Number(breakMinutes) || 0,
+                multiplier: 1.5,
+                baseEarn: total,
+                overtimeEarn: 0,
+                total
+            };
+        }
+
+        const fridayMult = type === 'friday' ? 1.25 : 1.0;
+        const regularHours = Math.min(netHours, 8);
+        const overtimeTotal = Math.max(0, netHours - 8);
+        const overtime125Hours = Math.min(overtimeTotal, 2);
+        const overtime150Hours = Math.max(0, overtimeTotal - 2);
+
+        const baseEarn = regularHours * rate * fridayMult;
+        const overtimeEarn = overtime125Hours * rate * 1.25 + overtime150Hours * rate * 1.5;
         const total = baseEarn + overtimeEarn;
 
         return {
             hours: netHours,
             regularHours,
-            overtimeHours,
-            breakMinutes,
-            multiplier,
+            overtimeHours: overtimeTotal,
+            overtime125Hours,
+            overtime150Hours,
+            breakMinutes: Number(breakMinutes) || 0,
+            multiplier: fridayMult,
             baseEarn,
             overtimeEarn,
             total
@@ -579,4 +654,12 @@ const Analytics = {
 // EXPORT
 // ============================================
 
-window.AppUtils = { Utils, TaxCalculator, PensionCalculator, SeveranceCalculator, OvertimeCalculator, Analytics };
+const AppUtilsExport = { Utils, TaxCalculator, PensionCalculator, SeveranceCalculator, OvertimeCalculator, Analytics };
+
+if (typeof window !== 'undefined') {
+    window.AppUtils = AppUtilsExport;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AppUtilsExport;
+}

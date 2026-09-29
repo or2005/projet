@@ -1,0 +1,15 @@
+node_modules/
+dist/
+USB-Installer/
+USB-Installer-v3/
+.git-index-publish.tmp
+.env*
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.blockmap
+*.lnk
+npm-debug.log*

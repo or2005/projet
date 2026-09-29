@@ -10,6 +10,8 @@ Download and run the Windows installer from the repository's Releases page. The 
 
 Sign in with a Google account. New users then complete a local profile. The same Google authorization enables Google Calendar and the application's private Google Drive `appDataFolder` backup. Google sign-in requires the project owner to enable both Google Calendar API and Google Drive API and configure the OAuth consent screen for `openid`, `email`, `profile`, `calendar.events` and `drive.appdata`.
 
+The app opens Google's consent page in your default browser and listens on a temporary loopback address for the reply. The sign-in button stays disabled until you approve or the flow ends, so a slow consent screen is not mistaken for a frozen app. If the browser reports a redirect error, confirm the OAuth client type is **Desktop app**; a *Web application* client rejects loopback redirect URIs, and the app then waits until the flow times out.
+
 Profile and finance files are stored locally using Electron safeStorage. Work-shift data is stored in the current Windows user data directory. Drive backups use the app's private Drive folder, but the backup JSON is not end-to-end encrypted by the app. Avoid using the app for data that requires client-side-only encryption.
 
 ## Run from source
